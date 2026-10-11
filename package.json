@@ -1,0 +1,18 @@
+{
+  "name": "kredithai",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Kredithai – zusammen zocken, um die Schulden beim Hai-Boss zu bezahlen. Browser-Spiel für Familie und Freunde, solo oder online bis 6.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test test/logik.test.js test/raeume.test.js",
+    "balance": "node test/balance.js 120 2 0.3"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

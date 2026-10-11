@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0b0a10">
+<title>Kredithai</title>
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<style>
+@font-face{font-family:"Barlow Semi Condensed";font-weight:600;font-display:swap;src:url(/vendor/barlow-semi-condensed-600.woff2) format("woff2")}
+@font-face{font-family:"Barlow Semi Condensed";font-weight:700;font-display:swap;src:url(/vendor/barlow-semi-condensed-700.woff2) format("woff2")}
+@font-face{font-family:"Barlow Semi Condensed";font-weight:800;font-display:swap;src:url(/vendor/barlow-semi-condensed-800.woff2) format("woff2")}
+:root{
+  --bg:#0b0a10;--flaeche:#16141d;--flaeche2:#201d2a;--rand:#2f2b3d;--text:#f3efe6;--leise:#a69fb5;
+  --gold:#e8b923;--gold2:#ffd866;--gruen:#43d17a;--rot:#ff5a5a;--blau:#5ab4ff;--lila:#b388ff;
+  --schatten:0 10px 30px rgba(0,0,0,.45);--r:14px;
+  --sicher-u:env(safe-area-inset-bottom,0px);--sicher-o:env(safe-area-inset-top,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font:600 16px/1.35 "Barlow Semi Condensed",system-ui,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+input{font:inherit;color:inherit;user-select:text;-webkit-user-select:text}
+[hidden]{display:none!important}
+canvas#welt{position:fixed;inset:0;width:100%;height:100%;display:block}
+.knopf{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 18px;border-radius:12px;background:var(--flaeche2);border:1px solid var(--rand);font-weight:700;transition:transform .08s,filter .15s}
+.knopf:hover{filter:brightness(1.15)}.knopf:active{transform:scale(.97)}
+.knopf.gold,button.gold{background:linear-gradient(180deg,var(--gold2),var(--gold));color:#1d1503;border-color:#a8820f}
+.knopf.rot,button.rot{background:linear-gradient(180deg,#ff7b7b,#e53935);color:#fff;border-color:#a02020}
+.knopf[disabled],button[disabled]{opacity:.45;cursor:not-allowed;filter:none}
+
+/* ---------- Menü-Bildschirme ---------- */
+.schirm{position:fixed;inset:0;display:grid;place-items:center;padding:16px;overflow:auto;z-index:40;background:radial-gradient(ellipse at 50% 0%,rgba(232,185,35,.16),transparent 60%),rgba(8,7,12,.82);backdrop-filter:blur(3px)}
+.karteBox{width:100%;max-width:520px;background:var(--flaeche);border:1px solid var(--rand);border-radius:20px;padding:24px;box-shadow:var(--schatten)}
+.titel{font-size:clamp(46px,11vw,78px);line-height:.9;margin:0;font-weight:800;letter-spacing:-.01em;background:linear-gradient(180deg,#fff3c4,var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 4px 30px rgba(232,185,35,.25)}
+.untertitel{color:var(--leise);margin:6px 0 18px;font-size:17px}
+.feldLabel{display:block;color:var(--leise);font-size:14px;margin:14px 0 6px;text-transform:uppercase;letter-spacing:.06em}
+.texteingabe{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--rand);background:var(--bg);font-size:18px}
+.tiere{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.tier{aspect-ratio:1;border-radius:12px;border:2px solid var(--rand);background:var(--flaeche2);font-size:30px;display:grid;place-items:center;position:relative}
+.tier small{position:absolute;bottom:2px;font-size:11px;color:var(--leise)}
+.tier.an{border-color:var(--gold);box-shadow:0 0 0 3px rgba(232,185,35,.25)}
+.tier.belegt{opacity:.3}
+.menueKnoepfe{display:grid;gap:10px;margin-top:20px}
+.zeile{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.zeile>*{flex:1}
+.wahl{display:flex;gap:6px;flex-wrap:wrap}
+.wahl button{padding:8px 12px;border-radius:10px;border:1px solid var(--rand);background:var(--flaeche2)}
+.wahl button.an{border-color:var(--gold);color:var(--gold2)}
+.klein{font-size:13px;color:var(--leise)}
+.fuss{margin-top:18px;display:flex;gap:14px;justify-content:center;font-size:14px}
+.fuss a{color:var(--leise)}
+.story{background:var(--flaeche2);border-radius:12px;padding:12px 14px;color:#ddd5c6;font-size:15px;border-left:3px solid var(--gold)}
+.code{font-size:44px;letter-spacing:.18em;font-weight:800;color:var(--gold2);text-align:center;margin:4px 0}
+.mitglieder{display:grid;gap:6px;margin:12px 0}
+.mitglied{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:10px;background:var(--flaeche2)}
+.mitglied .icon{font-size:24px}.mitglied .host{margin-left:auto;color:var(--gold);font-size:13px}
+
+/* ---------- HUD ---------- */
+#hud{position:fixed;inset:0;pointer-events:none;z-index:10}
+#hud>*{pointer-events:auto}
+#oben{position:absolute;top:calc(10px + var(--sicher-o));left:50%;transform:translateX(-50%);display:flex;gap:10px;align-items:stretch;pointer-events:none}
+.kasse{background:rgba(14,12,20,.86);border:1px solid var(--rand);border-radius:14px;padding:8px 14px;min-width:260px;box-shadow:var(--schatten)}
+.kasse .zeilen{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.kasse .bank{font-size:28px;font-weight:800;color:var(--gold2)}
+.kasse .bank.ok{color:var(--gruen)}
+.kasse .rate{color:var(--leise);font-size:15px;white-space:nowrap}
+.balken{height:8px;border-radius:5px;background:#2a2638;overflow:hidden;margin-top:5px}
+.balken i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ffb300,var(--gold2));transition:width .3s}
+.balken i.ok{background:linear-gradient(90deg,#2ecc71,#7dffb0)}
+.uhr{background:rgba(14,12,20,.86);border:1px solid var(--rand);border-radius:14px;padding:8px 14px;font-size:30px;font-weight:800;display:grid;place-items:center;min-width:92px;font-variant-numeric:tabular-nums}
+.uhr.knapp{color:var(--rot);animation:puls 1s infinite}
+.uhr.weg{font-size:20px;color:var(--leise)}
+@keyframes puls{50%{transform:scale(1.06)}}
+.tagInfo{position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);white-space:nowrap;font-size:14px;color:var(--leise);background:rgba(14,12,20,.7);border-radius:999px;padding:3px 12px}
+.tagInfo b{color:var(--text)}
+#feed{position:absolute;left:12px;top:calc(12px + var(--sicher-o));width:min(340px,40vw);display:flex;flex-direction:column;gap:4px;pointer-events:none}
+.feedZeile{background:rgba(14,12,20,.78);border-left:3px solid var(--rand);border-radius:8px;padding:5px 10px;font-size:14px;animation:rein .3s ease-out;transition:opacity .6s}
+.feedZeile.plus{border-color:var(--gruen)}.feedZeile.minus{border-color:var(--rot)}.feedZeile.aufgabe{border-color:var(--gold)}.feedZeile.tag{border-color:var(--lila)}
+.feedZeile.chat{border-color:var(--blau)}
+@keyframes rein{from{transform:translateX(-12px);opacity:0}}
+#aufgaben{position:absolute;right:12px;top:calc(12px + var(--sicher-o));width:min(280px,34vw);background:rgba(14,12,20,.82);border:1px solid var(--rand);border-radius:14px;padding:10px 12px;font-size:14px}
+#aufgaben h3{margin:0 0 6px;font-size:13px;letter-spacing:.08em;color:var(--gold);text-transform:uppercase}
+.aufgabe{display:flex;gap:8px;padding:4px 0;border-top:1px solid rgba(255,255,255,.06)}
+.aufgabe.fertig{color:var(--gruen);text-decoration:line-through;opacity:.75}
+.aufgabe small{color:var(--leise);white-space:nowrap;margin-left:auto}
+#aufgaben .zu{display:none}
+#unten{position:absolute;bottom:calc(12px + var(--sicher-u));left:50%;transform:translateX(-50%);display:flex;gap:8px;align-items:flex-end}
+.slot{width:62px;height:62px;border-radius:14px;background:rgba(14,12,20,.86);border:2px solid var(--rand);font-size:30px;display:grid;place-items:center;position:relative}
+.slot:not(:empty):hover{border-color:var(--gold)}
+.slot kbd{position:absolute;top:2px;left:5px;font:700 11px "Barlow Semi Condensed";color:var(--leise)}
+.slot.leer{opacity:.45}
+.effekte{display:flex;gap:4px;flex-wrap:wrap;max-width:200px;margin-left:6px}
+.eff{background:rgba(14,12,20,.86);border:1px solid var(--rand);border-radius:999px;padding:3px 8px;font-size:14px;white-space:nowrap}
+.hudKnopf{background:rgba(14,12,20,.86);border:1px solid var(--rand);border-radius:12px;padding:10px 12px;font-weight:700;font-size:15px}
+.hudKnopf.an{border-color:var(--gruen);color:var(--gruen)}
+#seitenKnoepfe{position:absolute;right:12px;bottom:calc(12px + var(--sicher-u));display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+#hinweis{position:absolute;left:50%;bottom:calc(92px + var(--sicher-u));transform:translateX(-50%);background:rgba(14,12,20,.92);border:1px solid var(--gold);color:var(--gold2);border-radius:999px;padding:10px 18px;font-size:17px;font-weight:700;white-space:nowrap;box-shadow:0 0 30px rgba(232,185,35,.25)}
+#hinweis kbd{background:var(--gold);color:#1d1503;border-radius:6px;padding:0 7px;margin-right:6px;font:800 15px "Barlow Semi Condensed"}
+#emotes{position:absolute;left:12px;bottom:calc(12px + var(--sicher-u));display:flex;gap:6px;flex-wrap:wrap;max-width:330px}
+#emotes button{background:rgba(14,12,20,.82);border:1px solid var(--rand);border-radius:10px;padding:6px 9px;font-size:14px}
+#chatBox{position:absolute;left:12px;bottom:calc(58px + var(--sicher-u));width:min(330px,60vw)}
+#chatBox input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--blau);background:rgba(14,12,20,.95)}
+#stick{position:absolute;left:24px;bottom:calc(84px + var(--sicher-u));width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.07);border:2px solid rgba(255,255,255,.15);display:none;touch-action:none}
+#stick i{position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px;border-radius:50%;background:rgba(255,255,255,.25)}
+#schweber{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.schwebe{position:absolute;transform:translate(-50%,-100%);font-weight:800;font-size:24px;white-space:nowrap;text-shadow:0 2px 6px #000,0 0 2px #000;animation:hoch 2.2s ease-out forwards}
+.schwebe.plus{color:#7dffb0}.schwebe.minus{color:#ff8a8a}.schwebe.gross{font-size:36px}
+.schwebe small{display:block;font-size:13px;color:#fff;opacity:.85;text-align:center}
+@keyframes hoch{0%{opacity:0;margin-top:10px}10%{opacity:1}100%{opacity:0;margin-top:-80px}}
+.blase{position:absolute;transform:translate(-50%,-100%);background:#fff;color:#111;border-radius:14px;padding:6px 10px;font-size:15px;max-width:220px;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,.4);animation:blase 4s forwards}
+.blase::after{content:"";position:absolute;left:50%;bottom:-7px;margin-left:-7px;border:7px solid transparent;border-top-color:#fff;border-bottom:0}
+.blase.emote{font-size:20px;font-weight:800}
+@keyframes blase{0%{opacity:0;transform:translate(-50%,-80%)}8%{opacity:1;transform:translate(-50%,-100%)}85%{opacity:1}100%{opacity:0}}
+#verschwommen{position:fixed;inset:0;pointer-events:none;z-index:9;backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);mask:radial-gradient(ellipse at center,transparent 25%,#000 70%);-webkit-mask:radial-gradient(ellipse at center,transparent 25%,#000 70%)}
+#betrunken{position:fixed;inset:0;pointer-events:none;z-index:9;background:radial-gradient(ellipse at center,transparent 50%,rgba(255,100,180,.18));animation:schwank 3s ease-in-out infinite}
+@keyframes schwank{50%{backdrop-filter:hue-rotate(25deg);opacity:.7}}
+
+/* ---------- Tisch-Panel ---------- */
+#panel{position:fixed;right:0;top:0;bottom:0;width:min(440px,100vw);z-index:20;background:rgba(18,16,25,.97);border-left:1px solid var(--rand);box-shadow:-10px 0 40px rgba(0,0,0,.5);overflow-y:auto;overscroll-behavior:contain;padding:14px 16px calc(24px + var(--sicher-u));animation:panelRein .25s ease-out;touch-action:pan-y}
+@keyframes panelRein{from{transform:translateX(30px);opacity:0}}
+#panelZu{position:sticky;top:0;float:right;width:40px;height:40px;border-radius:50%;background:var(--flaeche2);border:1px solid var(--rand);font-size:18px;z-index:2}
+.panelKopf{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.panelKopf h2{margin:0;font-size:28px;font-weight:800}
+.panelIcon{font-size:32px}
+.regeln{width:100%;color:var(--leise);font-size:14px}
+.regeln summary{cursor:pointer;color:var(--gold)}
+.regeln p{margin:6px 0 0}
+.panelInhalt{display:flex;flex-direction:column;gap:10px}
+.buehne{display:grid;place-items:center;min-height:120px;background:radial-gradient(ellipse at center,#24203a,#121019);border-radius:var(--r);padding:12px;position:relative;overflow:hidden}
+.buehne canvas{max-width:100%;height:auto}
+.ergebnis{min-height:34px;text-align:center;font-size:24px;font-weight:800}
+.ergebnis.plus{color:var(--gruen)}.ergebnis.minus{color:var(--rot)}.ergebnis.riesig{font-size:34px;text-shadow:0 0 20px rgba(67,209,122,.6)}
+.ergebnis.neu{animation:pop .4s ease-out}
+@keyframes pop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.15)}}
+.topf{text-align:center;color:var(--leise);font-size:16px}.topf b{color:var(--gold2);font-size:20px}
+.tipp{text-align:center;color:var(--lila);font-size:15px;min-height:0}
+.tipp:empty{display:none}
+.einsatz{background:var(--flaeche2);border:1px solid var(--rand);border-radius:var(--r);padding:10px 12px}
+.einsatzZeile{display:flex;align-items:center;gap:8px;font-size:20px}
+.einsatzLabel{color:var(--leise);font-size:14px;text-transform:uppercase;letter-spacing:.06em;flex:1}
+.einsatzWert{width:140px;text-align:right;font-size:24px;font-weight:800;background:var(--bg);border:1px solid var(--rand);border-radius:10px;padding:4px 10px;color:var(--gold2)}
+.einsatzWert.klein{width:80px;font-size:18px}
+.chips{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+.chip{padding:8px 10px;border-radius:999px;background:#2a2638;border:1px solid var(--rand);font-weight:700;font-size:15px}
+.chip.an{border-color:var(--gold);color:var(--gold2);background:#3a3020}
+.einsatzInfo{font-size:12px;color:var(--leise);margin-top:6px}
+.knoepfe{display:flex;flex-direction:column;gap:8px}
+.reihe{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.reihe>button{flex:1}
+button.gross{padding:14px 12px;border-radius:12px;background:#2c2840;border:1px solid #3d3856;font-size:19px;font-weight:800;line-height:1.1}
+button.gross small{display:block;font-size:13px;font-weight:600;opacity:.8;margin-top:2px}
+button.gross.gold{background:linear-gradient(180deg,var(--gold2),var(--gold));color:#1d1503;border-color:#a8820f}
+button.gross.rot{background:linear-gradient(180deg,#ff7b7b,#e53935);color:#fff;border-color:#a02020;animation:puls .6s infinite}
+button.gross:not([disabled]):hover{filter:brightness(1.12)}
+button.gross:not([disabled]):active{transform:scale(.98)}
+button.mittel{padding:10px;border-radius:10px;background:#2c2840;border:1px solid #3d3856}
+.label{color:var(--leise);font-size:14px}
+.tabelle{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:13px;color:var(--leise);background:var(--flaeche2);border-radius:10px;padding:8px 10px}
+.tabelle .an{color:var(--gold2);font-weight:800}
+.verlauf,.wetten{display:flex;flex-wrap:wrap;gap:4px;justify-content:center}
+.mini{background:#2a2638;border-radius:6px;padding:2px 6px;font-size:13px}
+.mini.ok{background:#1d4a30;color:#9dffc4}.mini.falsch{background:#4a1d1d;color:#ffb0b0}.mini.skip{opacity:.6}
+/* Karten */
+.karte{width:62px;height:88px;border-radius:8px;background:#fff;color:#151515;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 3px 8px rgba(0,0,0,.4);position:relative;flex:none}
+.karte b{font-size:26px;line-height:1}.karte i{font-style:normal;font-size:24px}
+.karte.rot{color:#d32f2f}
+.karte.zu{background:repeating-linear-gradient(45deg,#b71c1c 0 6px,#8e1414 6px 12px);border:3px solid #fff}
+.karte.neu{animation:kartRein .35s ease-out both}
+.karte.roentgen{outline:3px dashed var(--lila);opacity:.85}
+.karte.gehalten{transform:translateY(-10px);outline:3px solid var(--gold)}
+.karte em{position:absolute;bottom:-20px;font:800 11px "Barlow Semi Condensed";color:var(--gold2);font-style:normal}
+.karte.riesig{width:110px;height:156px}.karte.riesig b{font-size:46px}.karte.riesig i{font-size:40px}
+@keyframes kartRein{from{transform:translateY(-30px) rotate(-8deg);opacity:0}}
+.filz{background:radial-gradient(ellipse at center,#24804a,#145a32);border-radius:var(--r);padding:10px;display:flex;flex-direction:column;align-items:center;gap:6px;border:6px solid #5b3517}
+.filz.blau{background:radial-gradient(ellipse at center,#1f4fa0,#12306a)}
+.filz.rotfilz{background:radial-gradient(ellipse at center,#8e2433,#5e1420)}
+.hand{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;min-height:92px}
+.hand.poker{min-height:110px;padding-bottom:16px}
+.hand.poker .karte{cursor:pointer;transition:transform .15s}
+.wert{font-size:20px;font-weight:800;min-height:24px}
+/* Münze */
+.muenze3d{width:120px;height:120px;position:relative;transform-style:preserve-3d;transition:transform .3s}
+.muenze3d .seite{position:absolute;inset:0;border-radius:50%;display:grid;place-items:center;font-size:56px;background:radial-gradient(circle at 35% 35%,#ffe58a,#d9a514);border:5px solid #b8860b;backface-visibility:hidden;color:#6b4c08;font-weight:800}
+.muenze3d .zahl{transform:rotateY(180deg)}
+.muenze3d.zeigtZahl{transform:rotateY(180deg)}
+.muenze3d.wirbel{animation:wirbel 1.25s ease-out}
+@keyframes wirbel{0%{transform:translateY(0) rotateY(0)}50%{transform:translateY(-70px) rotateY(1440deg)}100%{transform:translateY(0) rotateY(2880deg)}}
+/* Roulette und Glücksrad */
+.rouletteWahl .aussen{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+.rouletteWahl .zahlen{display:grid;grid-template-columns:repeat(10,1fr);gap:3px}
+.feld{padding:8px 4px;border-radius:8px;background:#2a2638;border:2px solid transparent;font-weight:700;font-size:14px}
+.feld.r{background:#7a1a1a}.feld.s{background:#1b1b1b}.feld.g{background:#1d5a28}
+.feld.an{border-color:var(--gold);box-shadow:0 0 10px rgba(232,185,35,.5)}
+.zahlen .feld{padding:6px 0;font-size:13px}
+.radWahl{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.radWahl .feld{background:var(--f);text-shadow:0 1px 2px #000}
+.radWahl .feld small{display:block;font-size:11px;font-weight:600}
+/* Slots */
+.automat{background:linear-gradient(180deg,#8a2a1a,#4a140c);border-radius:var(--r);padding:16px;border:3px solid var(--gold)}
+.walzen{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.walze{background:#fffdf5;border-radius:10px;height:96px;display:grid;place-items:center;font-size:56px;box-shadow:inset 0 8px 14px rgba(0,0,0,.35),inset 0 -8px 14px rgba(0,0,0,.35)}
+/* Turm */
+.turm{display:flex;flex-direction:column;gap:4px}
+.turmReihe{display:flex;gap:4px;align-items:center}
+.turmMult{width:58px;font-size:12px;color:var(--leise);text-align:right}
+.turmFeld{flex:1;height:30px;border-radius:7px;background:#2a2638;border:1px solid var(--rand);font-size:18px}
+.turmFeld.aktiv{background:#3d3560;border-color:var(--gold);animation:glimm 1.2s infinite}
+.turmFeld.sicher{background:#1d4a30}.turmFeld.drache{background:#7a1a1a}.turmFeld.dracheZu{background:#4a1d1d;opacity:.7}
+@keyframes glimm{50%{box-shadow:0 0 12px rgba(232,185,35,.5)}}
+/* Minen */
+.minenFeld{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.mine{aspect-ratio:1;border-radius:10px;background:#2f3a48;border:1px solid #435266;font-size:26px}
+.mine:hover{filter:brightness(1.2)}
+.mine.gem{background:#1d4a30}.mine.boom{background:#c62828;animation:pop .3s}.mine.zeigMine{background:#4a1d1d;opacity:.8}
+.tippFeld{outline:3px dashed var(--lila)!important}
+/* Würfel */
+.wuerfel{font-size:90px;line-height:1;color:#fff;text-shadow:0 4px 10px #000}
+.wuerfel.rollt{animation:rollt .15s infinite}
+@keyframes rollt{50%{transform:rotate(20deg) translateY(-8px)}}
+.buehne.strasse{grid-auto-flow:column;gap:20px;background:linear-gradient(180deg,#37474f,#263238)}
+/* Hütchen */
+.buehne.huetchen{height:190px;display:block;background:linear-gradient(180deg,#2e7d32,#1b5e20)}
+.becher{position:absolute;bottom:40px;width:80px;height:96px;margin-left:-40px;background:linear-gradient(90deg,#b71c1c,#e53935,#b71c1c);clip-path:polygon(15% 0,85% 0,100% 100%,0 100%);border-radius:6px;transition:transform .12s}
+.becher.waehlbar{cursor:pointer;filter:drop-shadow(0 0 10px rgba(255,235,59,.7))}
+.hKugel{position:absolute;bottom:42px;width:22px;height:22px;margin-left:-11px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff,#ccc);transition:opacity .2s}
+/* Keno */
+.keno{display:grid;grid-template-columns:repeat(8,1fr);gap:4px}
+.kz{aspect-ratio:1;border-radius:50%;background:#2a1450;border:1px solid #4a2a80;font-weight:700;font-size:14px}
+.kz.an{background:#1e5a8a;border-color:var(--blau)}.kz.gezogen{background:#6a1b9a}.kz.treffer{background:var(--gold);color:#111;animation:pop .3s}
+/* Enten & Rakete */
+.rennbahn{border-radius:10px}
+.entenListe{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+.ente{padding:8px;border-radius:10px;background:#2a2638;border:2px solid transparent;border-left:6px solid var(--f)}
+.ente small{display:block;color:var(--gold2)}
+.ente.an{border-color:var(--gold)}.ente.gewettet{background:#3a3020}
+.los{border-radius:10px;touch-action:none;cursor:crosshair;width:260px;height:260px}
+
+/* ---------- Pfandhaus, Hinterzimmer, Abrechnung, Ende ---------- */
+.dialog{position:fixed;inset:0;z-index:30;display:grid;place-items:center;padding:16px;background:rgba(5,4,8,.6);backdrop-filter:blur(2px);overflow:auto}
+.dialogBox{width:100%;max-width:640px;background:var(--flaeche);border:1px solid var(--rand);border-radius:20px;padding:20px;box-shadow:var(--schatten);max-height:calc(100vh - 32px);overflow:auto;touch-action:pan-y}
+.dialogBox h2{margin:0 0 4px;font-size:30px}
+.sprecher{display:flex;gap:14px;align-items:flex-start;margin:10px 0}
+.sprecher .gesicht{font-size:52px;line-height:1}
+.sprecher .rede{background:var(--flaeche2);border-radius:14px;padding:10px 14px;font-size:17px;position:relative;flex:1}
+.angebot{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:10px 0}
+.ware{background:var(--flaeche2);border:1px solid var(--rand);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:4px;text-align:left}
+.ware .wIcon{font-size:34px}
+.ware b{font-size:17px}
+.ware p{margin:0;font-size:13px;color:var(--leise);flex:1}
+.ware .preis{color:var(--gold2);font-weight:800}
+.ware.weg{opacity:.35}
+.ware:not(.weg):hover{border-color:var(--gold)}
+.statusZeile{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin:8px 0}
+.pill{background:var(--flaeche2);border-radius:999px;padding:5px 12px;font-size:15px}
+.pill b{color:var(--gold2)}
+.pfandListe{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:10px 0}
+.pfandListe button{background:var(--flaeche2);border:1px solid var(--rand);border-radius:14px;padding:12px;text-align:left}
+.pfandListe button small{display:block;color:var(--leise);font-size:13px}
+.pfandListe button[disabled]{opacity:.4}
+.bereitListe{display:flex;gap:6px;flex-wrap:wrap}
+.stempel{display:inline-block;font-size:42px;font-weight:800;padding:4px 18px;border:5px solid;border-radius:12px;transform:rotate(-8deg);animation:stempel .5s cubic-bezier(.2,2,.4,1) both;margin:10px 0}
+.stempel.ok{color:var(--gruen);border-color:var(--gruen)}.stempel.nein{color:var(--rot);border-color:var(--rot)}
+@keyframes stempel{from{transform:rotate(-8deg) scale(3);opacity:0}}
+.grossZahl{font-size:38px;font-weight:800;color:var(--gold2)}
+.statistik{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;margin:12px 0}
+.statistik div{background:var(--flaeche2);border-radius:12px;padding:10px}
+.statistik small{display:block;color:var(--leise)}
+#abrechnung{place-items:end center;background:linear-gradient(180deg,transparent 40%,rgba(5,4,8,.65));backdrop-filter:none}
+#abrechnungBox{max-width:520px;padding:14px 18px}
+#abrechnungBox .stempel{font-size:34px;margin:4px 0}
+#toasts{position:fixed;left:50%;top:calc(110px + var(--sicher-o));transform:translateX(-50%);z-index:50;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none}
+.toast{background:rgba(14,12,20,.95);border:1px solid var(--rot);color:#ffd0d0;border-radius:999px;padding:8px 16px;font-size:15px;animation:rein .2s;transition:opacity .4s}
+.toast.gut{border-color:var(--gruen);color:#c8ffdc}
+#lade{position:fixed;inset:0;display:grid;place-items:center;background:var(--bg);z-index:60;font-size:22px;color:var(--leise)}
+
+/* Panel offen (breiter Bildschirm): HUD in die freie linke Fläche rücken */
+@media (min-width:761px){
+  body.panelAuf #oben{left:calc((100% - min(440px,100vw)) / 2)}
+  body.panelAuf #aufgaben,body.panelAuf #seitenKnoepfe{display:none}
+  body.panelAuf #unten{left:calc((100% - min(440px,100vw)) / 2)}
+}
+/* ---------- Kleine Bildschirme ---------- */
+@media (max-width:760px){
+  #oben{top:calc(6px + var(--sicher-o))}
+  .kasse{min-width:0;padding:6px 10px}.kasse .zeilen{flex-wrap:nowrap;gap:8px}.kasse .bank{font-size:21px;white-space:nowrap}.kasse .rate{font-size:12px}
+  .uhr{font-size:22px;min-width:66px;padding:6px 8px}
+  #feed{top:auto;bottom:calc(220px + var(--sicher-u));width:min(300px,70vw)}
+  .feedZeile{font-size:13px}
+  .tagInfo{font-size:12px;padding:2px 10px}
+  #aufgaben{top:calc(96px + var(--sicher-o));width:190px;font-size:12px;padding:6px 10px}
+  #aufgaben h3{margin:0;cursor:pointer}
+  #aufgaben h3::after{content:' ▴'}
+  #aufgaben.eingeklappt h3::after{content:' ▾'}
+  #aufgaben.eingeklappt .aufgabe{display:none}
+  #emotes{display:none}
+  #stick{display:block}
+  .slot{width:52px;height:52px;font-size:26px}
+  #unten{bottom:calc(10px + var(--sicher-u))}
+  #panel{top:auto;height:68vh;width:100vw;border-left:0;border-top:1px solid var(--rand);border-radius:20px 20px 0 0;animation:panelHoch .25s ease-out}
+  @keyframes panelHoch{from{transform:translateY(40px);opacity:0}}
+  #hinweis{bottom:calc(80px + var(--sicher-u));font-size:16px}
+  body.panelAuf #stick,body.panelAuf #unten,body.panelAuf #seitenKnoepfe,body.panelAuf #feed,body.panelAuf #aufgaben{display:none}
+  .tiere{grid-template-columns:repeat(3,1fr)}
+  .karte{width:52px;height:74px}.karte b{font-size:22px}.karte i{font-size:20px}
+}
+@media (max-width:760px) and (orientation:landscape){
+  #panel{height:100vh;width:min(420px,60vw);right:0;top:0;border-radius:0}
+  #feed{display:none}
+}
+</style>
+</head>
+<body>
+<div id="lade">Kredithai lädt …</div>
+<canvas id="welt" aria-label="3D-Casino"></canvas>
+<div id="verschwommen" hidden></div>
+<div id="betrunken" hidden></div>
+
+<div id="hud" hidden>
+  <div id="oben">
+    <div class="kasse">
+      <div class="zeilen"><span class="bank" id="hBank">0 $</span><span class="rate" id="hRate">Rate 0 $</span></div>
+      <div class="balken"><i id="hBalken"></i></div>
+    </div>
+    <div class="uhr" id="hUhr">5:00</div>
+    <div class="tagInfo" id="hTag"></div>
+  </div>
+  <div id="feed"></div>
+  <div id="aufgaben"><h3>Aufgaben</h3><div id="hAufgaben"></div></div>
+  <div id="unten">
+    <button class="slot" data-slot="0"><kbd>1</kbd></button>
+    <button class="slot" data-slot="1"><kbd>2</kbd></button>
+    <button class="slot" data-slot="2"><kbd>3</kbd></button>
+    <div class="effekte" id="hEffekte"></div>
+  </div>
+  <div id="seitenKnoepfe">
+    <button class="hudKnopf" id="hFeierabend" title="Tag früher beenden, wenn alle zustimmen">🏁 Feierabend</button>
+    <button class="hudKnopf" id="hMenue" title="Menü">☰</button>
+  </div>
+  <div id="hinweis" hidden></div>
+  <div id="emotes"></div>
+  <div id="chatBox" hidden><input id="chatEingabe" maxlength="80" placeholder="Nachricht an alle … (Enter)" autocomplete="off"></div>
+  <div id="stick"><i></i></div>
+  <div id="schweber"></div>
+</div>
+
+<aside id="panel" hidden><button id="panelZu" aria-label="Tisch verlassen">✕</button><div id="panelWurzel"></div></aside>
+
+<!-- Startmenü -->
+<section class="schirm" id="menue" hidden>
+  <div class="karteBox">
+    <h1 class="titel">KREDIT&shy;HAI</h1>
+    <p class="untertitel">Zusammen zocken. Zusammen pleitegehen.</p>
+    <div class="story">Ihr schuldet <b>Don Flosse</b> über eine Million. Jeden Morgen gibt er euch Jetons, jeden Abend will er seine Rate. Ein gemeinsames Konto – eine falsche Wette ruiniert alle. <span class="klein">(Nur Spielgeld.)</span></div>
+    <label class="feldLabel" for="mName">Dein Name</label>
+    <input class="texteingabe" id="mName" maxlength="16" placeholder="z. B. Glückspilz" autocomplete="off">
+    <span class="feldLabel">Deine Figur</span>
+    <div class="tiere" id="mTiere"></div>
+    <div class="menueKnoepfe">
+      <button class="knopf gold" id="mSolo">🎰 Allein spielen</button>
+      <button class="knopf" id="mNeu">👥 Raum für Freunde erstellen</button>
+      <div class="zeile"><input class="texteingabe" id="mCode" maxlength="4" placeholder="CODE" style="text-transform:uppercase;text-align:center;letter-spacing:.2em;flex:1"><button class="knopf" id="mBeitreten" style="flex:1">Beitreten</button></div>
+    </div>
+    <span class="feldLabel">Einstellungen</span>
+    <div class="zeile"><span class="klein" style="flex:0 0 90px">Lauf</span><div class="wahl" id="mLaenge"><button data-w="kurz">Kurz · 8 Tage</button><button data-w="normal">Normal · 12 Tage</button></div></div>
+    <div class="zeile" style="margin-top:6px"><span class="klein" style="flex:0 0 90px">Tageslänge</span><div class="wahl" id="mDauer"><button data-w="180">3 min</button><button data-w="300">5 min</button><button data-w="420">7 min</button></div></div>
+    <div class="zeile" style="margin-top:6px"><span class="klein" style="flex:0 0 90px">Grafik</span><div class="wahl" id="mGrafik"><button data-w="niedrig">Niedrig</button><button data-w="mittel">Mittel</button><button data-w="hoch">Hoch</button></div></div>
+    <div class="zeile" style="margin-top:6px"><span class="klein" style="flex:0 0 90px">Ton</span><div class="wahl" id="mTon"><button data-w="an">An</button><button data-w="aus">Aus</button></div></div>
+    <div class="fuss"><a href="#" id="mHilfe">So geht's</a><a href="/datenschutz" target="_blank" rel="noopener">Datenschutz</a></div>
+  </div>
+</section>
+
+<!-- Lobby -->
+<section class="schirm" id="lobby" hidden>
+  <div class="karteBox">
+    <h2 style="margin:0">Raum</h2>
+    <div class="code" id="lCode">----</div>
+    <div class="zeile"><button class="knopf" id="lLink">🔗 Einladungslink kopieren</button></div>
+    <div class="mitglieder" id="lMitglieder"></div>
+    <div id="lEinst" class="klein"></div>
+    <div class="menueKnoepfe">
+      <button class="knopf gold" id="lStart">Lauf starten</button>
+      <p class="klein" id="lWarte" style="text-align:center;margin:0">Der Host startet den Lauf.</p>
+      <button class="knopf" id="lRaus">Raum verlassen</button>
+    </div>
+  </div>
+</section>
+
+<!-- Hilfe -->
+<section class="schirm" id="hilfe" hidden>
+  <div class="karteBox">
+    <h2 style="margin:0 0 8px">So geht's</h2>
+    <p>Jeder Tag dauert ein paar Minuten. Morgens gibt Don Flosse euch Jetons auf Pump, abends will er seine <b>Rate</b>. Habt ihr sie, ist der Tag geschafft – was übrig bleibt, nehmt ihr mit. Habt ihr sie nicht, nimmt er alles und schreibt eine <b>Mahnung</b>. Drei Mahnungen, und ihr putzt für immer sein Aquarium.</p>
+    <p>Alle teilen sich ein Konto. Lauf zu einem Tisch und spiel – über 17 Glücksspiele, je Etage kommen neue dazu. Die <b>Herausforderungen</b> oben rechts bringen Geld und Tickets. Mit Tickets kauft ihr im Hinterzimmer Items, die das Glück ein bisschen zinken.</p>
+    <p>Pleite? Frau Elster im <b>Pfandhaus</b> nimmt eure Schuhe, Brille, Uhr – und die Hose.</p>
+    <p class="klein">Steuerung: WASD oder Pfeile laufen · Maus ziehen dreht die Kamera · E oder Klick spielen · 1–3 Items · Enter Chat · F1–F6 Sprüche · Esc Tisch verlassen. Am Handy: Stick links, rechts wischen dreht.</p>
+    <button class="knopf gold" id="hilfeZu" style="width:100%;margin-top:8px">Verstanden</button>
+  </div>
+</section>
+
+<div class="dialog" id="pfand" hidden><div class="dialogBox" id="pfandBox"></div></div>
+<div class="dialog" id="laden" hidden><div class="dialogBox" id="ladenBox"></div></div>
+<div class="dialog" id="abrechnung" hidden><div class="dialogBox" id="abrechnungBox" style="text-align:center"></div></div>
+<div class="dialog" id="finale" hidden><div class="dialogBox" id="finaleBox" style="text-align:center"></div></div>
+<div class="dialog" id="ende" hidden><div class="dialogBox" id="endeBox" style="text-align:center"></div></div>
+<div class="dialog" id="spielMenue" hidden><div class="dialogBox" style="max-width:380px">
+  <h2>Pause</h2>
+  <p class="klein" id="smInfo"></p>
+  <div class="menueKnoepfe">
+    <button class="knopf" id="smLink" hidden>🔗 Einladungslink kopieren</button>
+    <button class="knopf" id="smTon">🔊 Ton</button>
+    <button class="knopf" id="smHilfe">❓ So geht's</button>
+    <button class="knopf rot" id="smVerlassen">Lauf verlassen</button>
+    <button class="knopf gold" id="smZu">Weiterspielen</button>
+  </div>
+</div></div>
+<div id="toasts"></div>
+
+<script src="/vendor/three.min.js"></script>
+<script src="/js/spiele.js"></script>
+<script src="/js/logik.js"></script>
+<script src="/js/ton.js"></script>
+<script src="/js/figuren.js"></script>
+<script src="/js/welt.js"></script>
+<script src="/js/tische.js"></script>
+<script src="/js/spiel.js"></script>
+</body>
+</html>
