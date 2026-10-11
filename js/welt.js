@@ -11,7 +11,7 @@
     { id:'spelunke', boden:'holz', wand:0x4a3326, wand2:0x5e3b26, decke:0x1a120c, nebel:0x22160e, nebelNah:14, nebelFern:46, amb:0x6a5040, hemi:[0xffd9a0, 0x2a1a10, 0.55], licht:0xffb060, licht2:0xff7a3d, akzent:0xd8a040, neon:[0xff6a3d, 0xffc04d], filz:0x1f6b3a, holz:0x5b3517, automat:0x8a2a1a },
     { id:'neon', boden:'gitter', wand:0x15111f, wand2:0x221a33, decke:0x09070f, nebel:0x170c26, nebelNah:12, nebelFern:44, amb:0x403058, hemi:[0xb090ff, 0x100818, 0.5], licht:0xd070ff, licht2:0x3dfcff, akzent:0xff3df2, neon:[0xff3df2, 0x3dfcff, 0xffe23d], filz:0x23246b, holz:0x241a33, automat:0x2a1450 },
     { id:'koralle', boden:'welle', wand:0x0f3b4a, wand2:0x0b2e3b, decke:0x071d26, nebel:0x0a2a36, nebelNah:12, nebelFern:44, amb:0x3a6a78, hemi:[0x9ff3ff, 0x062028, 0.55], licht:0x7fe3ff, licht2:0xff9a7a, akzent:0x4dfff0, neon:[0x4dfff0, 0xff8a65, 0xb388ff], filz:0x0f6b6b, holz:0x2a4a50, automat:0x0d5060 },
-    { id:'penthouse', boden:'marmor', wand:0xe9e1d2, wand2:0xd8ccb5, decke:0xe0d6c4, nebel:0x1a1f2e, nebelNah:20, nebelFern:60, amb:0x8a8070, hemi:[0xfff2d8, 0x403828, 0.7], licht:0xfff0d0, licht2:0xffd27a, akzent:0xe8b923, neon:[0xe8b923, 0xffffff], filz:0x6b1f2b, holz:0x2b1a10, automat:0x1a1a1a }
+    { id:'penthouse', boden:'marmor', wand:0xcfc6b6, wand2:0xb8ab93, decke:0xc9bfae, nebel:0x1a1f2e, nebelNah:20, nebelFern:60, amb:0x5a5448, hemi:[0xfff2d8, 0x403828, 0.42], licht:0xfff0d0, licht2:0xffd27a, akzent:0xe8b923, neon:[0xe8b923, 0xffffff], filz:0x6b1f2b, holz:0x2b1a10, automat:0x1a1a1a }
   ];
 
   function leinwand(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return [c, c.getContext('2d')]; }
@@ -40,7 +40,7 @@
       }
     } else {
       for (let i = 0; i < 8; i++) for (let k = 0; k < 8; k++) {
-        x.fillStyle = (i + k) % 2 ? '#f1ece2' : '#d9cfbd'; x.fillRect(i * 64, k * 64, 64, 64);
+        x.fillStyle = (i + k) % 2 ? '#ddd5c6' : '#b9ad97'; x.fillRect(i * 64, k * 64, 64, 64);
         x.strokeStyle = 'rgba(120,100,80,.12)'; x.lineWidth = 1.5;
         for (let a = 0; a < 3; a++) { x.beginPath(); x.moveTo(i * 64 + Math.random() * 64, k * 64); x.bezierCurveTo(i * 64 + Math.random() * 64, k * 64 + 20, i * 64 + Math.random() * 64, k * 64 + 44, i * 64 + Math.random() * 64, k * 64 + 64); x.stroke(); }
       }
@@ -627,8 +627,14 @@
     const renderer = new T.WebGLRenderer({ canvas, antialias:true, powerPreference:'high-performance' });
     let pixel = Math.min(2, window.devicePixelRatio || 1);
     renderer.setPixelRatio(pixel);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = T.PCFSoftShadowMap;
     const szene = new T.Scene();
     const kamera = new T.PerspectiveCamera(55, 1, 0.1, 120);
+    const G = KHGlanz;
+    const nach = G.nachbearbeitung(renderer, szene, kamera);
+    let bloomAn = !!nach, envTex = null, staubP = null, reihe = null, theke = null;
+    const fx = G.effekte(szene);
     const raum = new T.Group(); szene.add(raum);
     const tischGr = new T.Group(); szene.add(tischGr);
     const figurGr = new T.Group(); szene.add(figurGr);
@@ -637,14 +643,19 @@
     const tische = new Map();     // id -> { g, art, x, z, schild }
     const figuren = new Map();    // id -> { g, name, x, z, r }
     const licht = { amb:new T.AmbientLight(0xffffff, 0.5), hemi:new T.HemisphereLight(0xffffff, 0x222222, 0.5), sonne:new T.DirectionalLight(0xffffff, 0.45) };
-    licht.sonne.position.set(6, 14, 4);
-    szene.add(licht.amb, licht.hemi, licht.sonne);
+    licht.sonne.position.set(5, 16, 7);
+    licht.sonne.castShadow = true;
+    Object.assign(licht.sonne.shadow.camera, { left:-19, right:19, top:14, bottom:-14, near:2, far:40 });
+    licht.sonne.shadow.mapSize.set(2048, 2048);
+    licht.sonne.shadow.bias = -0.0006; licht.sonne.shadow.normalBias = 0.03; licht.sonne.shadow.radius = 3;
+    szene.add(licht.amb, licht.hemi, licht.sonne, licht.sonne.target);
     const punkte = [];
     for (let i = 0; i < 4; i++) { const p = new T.PointLight(0xffffff, 0.8, 18, 2); szene.add(p); punkte.push(p); }
 
     function groesse() {
       const w = canvas.clientWidth || window.innerWidth, h = canvas.clientHeight || window.innerHeight;
       renderer.setSize(w, h, false);
+      if (nach) nach.groesse(w, h, pixel);
       kamera.aspect = w / h;
       kamera.fov = kamera.aspect < 0.8 ? 72 : kamera.aspect < 1.2 ? 62 : 55;   // Hochformat braucht mehr Sicht
       kamera.updateProjectionMatrix();
@@ -675,23 +686,27 @@
       szene.fog = new T.Fog(th.nebel, th.nebelNah, th.nebelFern);
       licht.amb.color.setHex(th.amb); licht.amb.intensity = 0.55;
       licht.hemi.color.setHex(th.hemi[0]); licht.hemi.groundColor.setHex(th.hemi[1]); licht.hemi.intensity = th.hemi[2];
-      licht.sonne.color.setHex(th.licht); licht.sonne.intensity = e === 3 ? 0.55 : 0.3;
+      licht.sonne.color.setHex(th.licht); licht.sonne.intensity = e === 3 ? 0.42 : 0.36;
       const lpos = [[-9, -4], [9, -4], [-9, 6], [9, 6]];
-      punkte.forEach((p, i) => { p.color.setHex(i % 2 ? th.licht2 : th.licht); p.position.set(lpos[i][0], 4.2, lpos[i][1]); p.intensity = e === 3 ? 0.5 : 0.9; });
+      punkte.forEach((p, i) => { p.color.setHex(i % 2 ? th.licht2 : th.licht); p.position.set(lpos[i][0], 4.2, lpos[i][1]); p.intensity = e === 3 ? 0.3 : 0.8; });
       // Boden
       const bt = bodenTextur(th.boden); bt.repeat.set(W / 6, D / 6);
-      const boden = new T.Mesh(new T.PlaneGeometry(W + 2, D + 2), new T.MeshLambertMaterial({ map:bt }));
-      boden.rotation.x = -Math.PI / 2; raum.add(boden);
+      const glatt = { holz:0.7, gitter:0.22, welle:0.8, marmor:0.12 }[th.boden];
+      const boden = new T.Mesh(new T.PlaneGeometry(W + 2, D + 2), new T.MeshStandardMaterial({ map:bt, roughness:glatt, metalness:th.boden === 'gitter' ? 0.4 : 0.05, envMapIntensity:th.boden === 'marmor' ? 0.9 : 0.7 }));
+      boden.rotation.x = -Math.PI / 2; boden.userData.keinSchatten = true; raum.add(boden);
+      // Casino-Teppich unter den Tischen (im Penthouse bleibt der Marmor frei)
+      if (e !== 3) raum.add(G.teppich(th, 30, 17).translateZ(1.7));
       // Teppichläufer zum Podium
       const laeufer = new T.Mesh(new T.PlaneGeometry(3, 8), mat(e === 1 ? 0x2a0f3a : 0x8e1b1b));
-      laeufer.rotation.x = -Math.PI / 2; laeufer.position.set(0, 0.005, -8); raum.add(laeufer);
+      laeufer.rotation.x = -Math.PI / 2; laeufer.position.set(0, 0.02, -8); laeufer.userData.keinSchatten = true; raum.add(laeufer);
       // Wände und Decke
       const wandM = mat(th.wand);
       raum.add(teil(new T.BoxGeometry(W + 2, H, 0.4), wandM, 0, H / 2, -D / 2 - 0.2));
       raum.add(teil(new T.BoxGeometry(W + 2, H, 0.4), wandM, 0, H / 2, D / 2 + 0.2));
       raum.add(teil(new T.BoxGeometry(0.4, H, D + 2), wandM, -W / 2 - 0.2, H / 2, 0));
       raum.add(teil(new T.BoxGeometry(0.4, H, D + 2), wandM, W / 2 + 0.2, H / 2, 0));
-      const decke = new T.Mesh(new T.PlaneGeometry(W + 2, D + 2), mat(th.decke)); decke.rotation.x = Math.PI / 2; decke.position.y = H; raum.add(decke);
+      for (const w of raum.children) w.userData.keinSchatten = true;
+      const decke = new T.Mesh(new T.PlaneGeometry(W + 2, D + 2), mat(th.decke)); decke.rotation.x = Math.PI / 2; decke.position.y = H; decke.userData.keinSchatten = true; raum.add(decke);
       // Sockel- und Zierleisten
       for (const [w, d, x, z] of [[W, 0.1, 0, -D / 2 + 0.05], [W, 0.1, 0, D / 2 - 0.05], [0.1, D, -W / 2 + 0.05, 0], [0.1, D, W / 2 - 0.05, 0]]) {
         raum.add(box(w, 0.25, d, th.wand2, x, 0.125, z));
@@ -705,6 +720,25 @@
       dekoBauen(e, th, W, D, H);
       podiumBauen(th, D);
       pfandhausBauen(th);
+      // Ausstattung: Automatenreihe an der Südwand, Bar, Absperrkordeln am Läufer, Staub im Licht
+      reihe = G.automatenReihe(th, -15.6, 15.6, 11.3); raum.add(reihe);
+      theke = G.bar(th); theke.position.set(15, 0, -10.6); raum.add(theke);
+      const posten = z0 => [-9.5, -8, -6.5, -5].map(z => [z0, z]);
+      raum.add(G.kordeln(posten(-1.75)), G.kordeln(posten(1.75)));
+      staubP = G.staub(th); raum.add(staubP);
+      schattenSetzen(raum);
+      // Spiegelungen aus dem fertigen Raum, Bloom-Stimmung je Etage
+      envTex = G.umgebung(renderer, szene, envTex);
+      if (nach) nach.stimmung(...[[0.8, 0.5, 0.74], [1.05, 0.55, 0.66], [0.75, 0.45, 0.8], [0.35, 0.35, 0.97]][e]);
+    }
+    // Schatten: alles Feste wirft, Glas, Licht und große Flächen nicht
+    function schattenSetzen(gr) {
+      gr.traverse(o => {
+        if (!o.isMesh && !o.isInstancedMesh) return;
+        o.receiveShadow = true;
+        const m = Array.isArray(o.material) ? o.material[0] : o.material;
+        o.castShadow = !o.userData.keinSchatten && m && !m.transparent && m.type !== 'MeshBasicMaterial';
+      });
     }
     function teil(g, m, x, y, z) { const t = new T.Mesh(g, m); t.position.set(x, y, z); return t; }
 
@@ -761,7 +795,7 @@
           const k = new T.Group(); k.position.set(x2, 4.3, z);
           k.add(zyl(0.6, 0.3, 0.3, th.akzent, 0, 0, 0, 16));
           for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2; const t2 = teil(geo('OctahedronGeometry', 0.07), leucht(0xfffde7), Math.cos(a) * 0.55, -0.3, Math.sin(a) * 0.55); k.add(t2); }
-          const sc = schein(0xfff3c4, 3.5); sc.position.y = -0.2; k.add(sc);
+          const sc = schein(0xfff3c4, 2.4); sc.material.opacity = 0.3; sc.position.y = -0.2; k.add(sc);
           raum.add(k);
         }
         for (const [x2, z] of [[-16, 11], [16, 11], [-16, -2], [16, -2]]) { raum.add(zyl(0.3, 0.25, 0.6, 0xfafafa, x2, 0.3, z, 12)); raum.add(kugel(0.55, 0x2e7d32, x2, 1.1, z, 10)); }
@@ -843,7 +877,11 @@
         liste.forEach((t, i) => {
           const g = (MODELLE[t.art] || MODELLE.slots)(thema, i);
           g.position.set(t.x, 0, t.z);
+          schattenSetzen(g);
           tischGr.add(g);
+          const hochModell = ['rad', 'rakete', 'plinko', 'turm', 'keno'].includes(t.art);
+          const lampe = G.tischLicht(thema, RADIUS[t.art] || 1.2, hochModell ? 4.75 : 4.1);
+          lampe.position.set(t.x, 0, t.z); tischGr.add(lampe);
           const sp = S.G[t.art];
           const schildS = F.textSprite(`${sp.icon} ${sp.name}`, { gr:44, grund:'rgba(10,10,14,.78)', farbe:'#fff', hoehe:0.42 });
           const hoch = { rakete:3.9, rad:3.9, plinko:3.6, turm:3.6, keno:3.3, enten:2.9, los:3.1, wuerfel:2.6, hilo:2.7 }[t.art] || 2.55;
@@ -864,6 +902,7 @@
       if (!f || f.tier !== sp.tier) {
         if (f) figurGr.remove(f.g, f.name);
         const g = F.tier(sp.tier);
+        schattenSetzen(g);
         const name = F.textSprite(sp.name, { gr:36, grund:'rgba(0,0,0,.55)', hoehe:0.26 });
         figurGr.add(g, name);
         f = { g, name, tier:sp.tier, x:sp.x || 0, z:sp.z || 0, r:0, zx:sp.x || 0, zz:sp.z || 0, zr:0, nameText:sp.name };
@@ -896,7 +935,7 @@
         const ring = new T.Mesh(new T.RingGeometry(4.8, 5, 64), new T.MeshBasicMaterial({ color:0x80d8ff, transparent:true, opacity:0.55, side:T.DoubleSide }));
         ring.rotation.x = -Math.PI / 2; ring.position.y = 0.03; g.add(ring);
         const sc = schein(0x80d8ff, 2.2); sc.position.y = 1.2; g.add(sc);
-        effektGr.add(g); statuen.push(g);
+        schattenSetzen(g); effektGr.add(g); statuen.push(g);
       }
       liste.forEach((s, i) => statuen[i].position.set(s.x, 0, s.z));
     }
@@ -936,10 +975,16 @@
       for (const [id, tt] of tische) {
         const info = o.tischInfo ? o.tischInfo(id) : { alle:[], frischIds:new Set() };
         tt.g.animieren && tt.g.animieren(dt, t, info);
-        tt.schild.visible = tt.limitS.visible = id !== o.meinTisch;
+        const nah = Math.hypot(kam.x - tt.x, kam.z - tt.z), sicht = Math.max(0, Math.min(1, (nah - 3) / 2.5));
+        tt.schild.visible = tt.limitS.visible = id !== o.meinTisch && sicht > 0.02;
+        tt.schild.material.opacity = tt.limitS.material.opacity = sicht;
         if (tt.glut.visible) tt.glut.material.opacity = 0.5 + Math.sin(t * 6) * 0.3;
       }
       if (don) don.animieren(dt, t, o.donLaune);
+      if (staubP && bloomAn) staubP.animieren(dt, t);
+      if (reihe) reihe.animieren(t);
+      if (theke) theke.animieren(dt, t);
+      fx.animieren(dt);
       if (elster) elster.animieren(dt, t);
       if (raum.userData.kugeln) raum.userData.kugeln.forEach(k => k.rotation.y += dt * 0.8);
       if (aquarium && Math.floor(t * 20) !== aquarium._f) {
@@ -968,7 +1013,7 @@
       }
       kamera.position.set(kam.x, kam.y, kam.z);
       kamera.lookAt(kam.lx, kam.ly, kam.lz);
-      renderer.render(szene, kamera);
+      if (nach && bloomAn) nach.render(); else renderer.render(szene, kamera);
     }
 
     const v3 = new T.Vector3();
@@ -979,11 +1024,19 @@
     }
     function grafik(stufe) {
       pixel = stufe === 'niedrig' ? 0.75 : stufe === 'mittel' ? Math.min(1.25, window.devicePixelRatio || 1) : Math.min(2, window.devicePixelRatio || 1);
-      renderer.setPixelRatio(pixel); groesse();
+      renderer.setPixelRatio(pixel);
+      bloomAn = !!nach && stufe !== 'niedrig';
+      renderer.shadowMap.enabled = stufe === 'hoch';   // Schatten nur auf Hoch (verdoppeln die Zeichenaufrufe)
+      const gr = stufe === 'hoch' ? 2048 : 1024;
+      if (licht.sonne.shadow.mapSize.x !== gr) { licht.sonne.shadow.mapSize.set(gr, gr); if (licht.sonne.shadow.map) { licht.sonne.shadow.map.dispose(); licht.sonne.shadow.map = null; } }
+      if (staubP) staubP.visible = stufe !== 'niedrig';
+      szene.traverse(o => { if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => m.needsUpdate = true); });
+      groesse();
     }
 
     return {
       etageBauen, tischeSetzen, figurenAbgleichen, figurZiel, statuenSetzen, rendern, projizieren, kameraZiel, grafik, groesse,
+      muenzregen:fx.muenzregen, konfetti:fx.konfetti,
       figuren, tische, kamera, RADIUS, sitzplaetze, get etage() { return etage; }
     };
   }

@@ -4,17 +4,23 @@
   'use strict';
   const T = THREE;
   const mats = new Map();
+  const METALL = new Set([0xe8b923, 0xd8a040, 0xbdbdbd, 0x9e9e9e, 0xc9a227, 0xd4af37]);
+  const LEUCHT = new Set([0xff3df2, 0x4dfff0]);
   function mat(farbe, extra) {
     const k = farbe + (extra ? JSON.stringify(extra) : '');
-    if (!mats.has(k)) { const m = new T.MeshLambertMaterial({ color:farbe, ...extra }); m._geteilt = true; mats.set(k, m); }
+    if (!mats.has(k)) {
+      // Gold und Chrom glänzen metallisch, Neon-Farben leuchten selbst (Bloom), alles andere seidenmatt
+      const art = METALL.has(farbe) ? { metalness:0.95, roughness:0.28 } : LEUCHT.has(farbe) ? { emissive:farbe, emissiveIntensity:0.35, roughness:0.4 } : { roughness:0.62, metalness:0.02 };
+      const m = new T.MeshStandardMaterial({ color:farbe, ...art, ...extra }); m._geteilt = true; mats.set(k, m);
+    }
     return mats.get(k);
   }
   const geos = new Map();
   function geo(art, ...a) { const k = art + a.join(','); if (!geos.has(k)) { const g = new T[art](...a); g._geteilt = true; geos.set(k, g); } return geos.get(k); }
   function teil(g, m, x = 0, y = 0, z = 0) { const t = new T.Mesh(g, typeof m === 'number' ? mat(m) : m); t.position.set(x, y, z); return t; }
   const box = (w, h, d, f, x, y, z) => teil(geo('BoxGeometry', w, h, d), f, x, y, z);
-  const zyl = (r1, r2, h, f, x, y, z, seg = 12) => teil(geo('CylinderGeometry', r1, r2, h, seg), f, x, y, z);
-  const kugel = (r, f, x, y, z, seg = 12) => teil(geo('SphereGeometry', r, seg, Math.max(6, seg * 0.7 | 0)), f, x, y, z);
+  const zyl = (r1, r2, h, f, x, y, z, seg = 16) => teil(geo('CylinderGeometry', r1, r2, h, seg), f, x, y, z);
+  const kugel = (r, f, x, y, z, seg = 16) => teil(geo('SphereGeometry', r, seg, Math.max(6, seg * 0.7 | 0)), f, x, y, z);
   const kegel = (r, h, f, x, y, z, seg = 8) => teil(geo('ConeGeometry', r, h, seg), f, x, y, z);
 
   /* ---------- Muster als Textur ---------- */

@@ -329,12 +329,14 @@
         schwebe(e.id, `${plus ? '+' : e.netto < 0 ? '−' : '±'}${zahl(Math.abs(e.netto))} $${e.notiz ? `<small>${e.notiz}</small>` : ''}`, 'schwebe ' + (plus ? 'plus' : 'minus') + (e.gross ? ' gross' : ''));
         const f = welt && welt.figuren.get(e.id);
         if (f) { if (plus && e.gross) f.g.jubel = 1.4; else if (!plus && e.gross) f.g.frust = 1.2; }
+        const wo = e.id === ich ? pos : f;
+        if (plus && wo && welt) welt.muenzregen(wo.x, wo.z, e.gross ? 2.2 : Math.min(1, 0.25 + e.faktor / 10));
         if (e.id !== ich && e.gross) Ton.spielen(plus ? 'sieg' : 'verlust');
         break;
       }
       case 'fehler': if (e.text !== 'Moment …') toast(e.text); break;
       case 'feed': feed(e.text, e.art); break;
-      case 'aufgabe': Ton.spielen('aufgabe'); break;
+      case 'aufgabe': { Ton.spielen('aufgabe'); const f = e.id === ich ? pos : welt && welt.figuren.get(e.id); if (f && welt) welt.konfetti(f.x, f.z); break; }
       case 'item': {
         Ton.spielen('item');
         const I = L.ITEMS[e.item];
@@ -613,7 +615,9 @@
   function hindernisse() {
     const kreise = z ? z.tische.map(t => ({ x:t.x, z:t.z, r:(welt.RADIUS[t.art] || 1.2) + 0.3 })) : [];
     const p = L.PFANDHAUS;
-    const kaesten = [{ x0:-2.6, x1:2.6, z0:-13, z1:-9.6 }, { x0:p.x - 2.3, x1:p.x + 1.35, z0:-13, z1:p.z + 0.05 }];
+    const kaesten = [{ x0:-2.6, x1:2.6, z0:-13, z1:-9.6 }, { x0:p.x - 2.3, x1:p.x + 1.35, z0:-13, z1:p.z + 0.05 },
+      { x0:12.9, x1:17, z0:-13, z1:-8.5 }, { x0:-17, x1:17, z0:10.85, z1:13 },
+      { x0:-1.8, x1:-1.7, z0:-9.6, z1:-5 }, { x0:1.7, x1:1.8, z0:-9.6, z1:-5 }];
     return { kreise, kaesten };
   }
   function bewegen(dt) {
