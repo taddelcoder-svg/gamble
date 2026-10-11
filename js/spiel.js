@@ -416,7 +416,7 @@
         h('span', { class:'pill', html:`Konto <b>${zahl(z.bank)} $</b>` }),
         h('span', { class:'pill', html:`Restschuld <b>${zahl(z.schuld)} $</b>` }),
         h('span', { class:'pill', html:`🎫 <b>${z.tickets}</b> Tickets` })),
-      h('h3', { text:'Onkel Ottos Ramschladen', style:'margin:14px 0 0' }),
+      h('div', { class:'trenner', text:'Onkel Ottos Ramschladen' }),
       h('p', { class:'klein', text:'Tickets sind für alle gemeinsam. Was du kaufst, landet in deinen Taschen (3 Plätze).' }));
     const ang = h('div', { class:'angebot' });
     l.angebot.forEach((a, i) => {

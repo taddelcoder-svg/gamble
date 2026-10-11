@@ -24,7 +24,7 @@
   function karte(k, extra) {
     if (k == null) return h('div', { class:'karte zu' + (extra ? ' ' + extra : '') });
     const r = k % 13, f = (k / 13) | 0;
-    return h('div', { class:'karte' + (f === 1 || f === 2 ? ' rot' : '') + (extra ? ' ' + extra : '') }, h('b', { text:RANG[r] }), h('i', { text:FARB[f] }));
+    return h('div', { class:'karte' + (f === 1 || f === 2 ? ' rot' : '') + (extra ? ' ' + extra : ''), 'data-r':RANG[r] }, h('b', { text:RANG[r] }), h('i', { text:FARB[f] }));
   }
   const kartenText = k => RANG[k % 13] + FARB[(k / 13) | 0];
 

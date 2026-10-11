@@ -1,0 +1,213 @@
+/* Kredithai – Premium-Oberfläche: liegt über den Grundstilen in index.html.
+   Schwarzes Glas mit Goldkante, Serifen-Titel, polierte Goldknöpfe, Chips, Filz und Samt. */
+@font-face{font-family:"Playfair Display";font-weight:700;font-display:swap;src:url(/vendor/playfair-display-700.woff2) format("woff2")}
+@font-face{font-family:"Playfair Display";font-weight:700;font-style:italic;font-display:swap;src:url(/vendor/playfair-display-700-italic.woff2) format("woff2")}
+@font-face{font-family:"Playfair Display";font-weight:900;font-display:swap;src:url(/vendor/playfair-display-900.woff2) format("woff2")}
+:root{
+  --gold-hell:#fff1c1;--gold:#e6b93a;--gold-tief:#9a6f12;--gold-linie:rgba(230,185,58,.45);--gold-hauch:rgba(230,185,58,.14);
+  --glas:linear-gradient(180deg,rgba(26,21,34,.94),rgba(11,9,15,.97));
+  --serif:"Playfair Display",Georgia,"Times New Roman",serif;
+  --goldtext:linear-gradient(180deg,#fff6d6 0%,#f3cf6a 45%,#c8941f 70%,#f6dc8c 100%);
+}
+
+/* ---------- Grundbausteine ---------- */
+.karteBox,.dialogBox,#panel{
+  background:var(--glas);border:1px solid var(--gold-linie);
+  box-shadow:0 30px 80px rgba(0,0,0,.6),inset 0 0 0 1px rgba(255,241,193,.05),inset 0 1px 0 rgba(255,241,193,.12);
+}
+.karteBox,.dialogBox{position:relative}
+.karteBox::before,.dialogBox::before{
+  content:"";position:absolute;inset:8px;border:1px solid var(--gold-hauch);border-radius:14px;pointer-events:none;
+  -webkit-mask:linear-gradient(#000,#000);
+}
+/* Ecken-Ornamente */
+.karteBox::after,.dialogBox::after{
+  content:"";position:absolute;inset:4px;pointer-events:none;border-radius:16px;
+  background:
+    linear-gradient(var(--gold),var(--gold)) top left/22px 2px no-repeat,linear-gradient(var(--gold),var(--gold)) top left/2px 22px no-repeat,
+    linear-gradient(var(--gold),var(--gold)) top right/22px 2px no-repeat,linear-gradient(var(--gold),var(--gold)) top right/2px 22px no-repeat,
+    linear-gradient(var(--gold),var(--gold)) bottom left/22px 2px no-repeat,linear-gradient(var(--gold),var(--gold)) bottom left/2px 22px no-repeat,
+    linear-gradient(var(--gold),var(--gold)) bottom right/22px 2px no-repeat,linear-gradient(var(--gold),var(--gold)) bottom right/2px 22px no-repeat;
+  opacity:.75;
+}
+.dialogBox h2,.panelKopf h2,#lobby h2,#hilfe h2,#spielMenue h2{
+  font-family:var(--serif);font-weight:900;letter-spacing:.01em;
+  background:var(--goldtext);-webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.dialogBox h3{font-family:var(--serif);font-weight:700;font-style:italic;color:var(--gold-hell);letter-spacing:.02em}
+.trenner{display:flex;align-items:center;gap:10px;color:var(--gold);font-size:12px;letter-spacing:.3em;text-transform:uppercase;margin:14px 0 8px}
+.trenner::before,.trenner::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--gold-linie),transparent)}
+
+/* ---------- Knöpfe ---------- */
+.knopf,button.gross,button.mittel,.chip,.wahl button,.hudKnopf{transition:transform .1s,filter .15s,box-shadow .2s,border-color .2s}
+.knopf{background:linear-gradient(180deg,#2a2335,#17131f);border:1px solid rgba(230,185,58,.32);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 4px 14px rgba(0,0,0,.35);letter-spacing:.02em}
+.knopf:hover{border-color:var(--gold);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 0 1px rgba(230,185,58,.2),0 6px 20px rgba(0,0,0,.4)}
+.knopf.gold,button.gold,button.gross.gold{
+  background:linear-gradient(180deg,#fff0b8 0%,#f2cd5b 28%,#d9a62a 62%,#b98415 100%);
+  color:#2a1c02;border:1px solid #8a6210;text-shadow:0 1px 0 rgba(255,255,255,.4);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.75),inset 0 -2px 0 rgba(120,80,0,.35),0 6px 18px rgba(230,185,58,.25),0 2px 4px rgba(0,0,0,.4);
+  position:relative;overflow:hidden;font-weight:800;
+}
+.knopf.gold::after,button.gold::after{
+  content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent);transform:skewX(-20deg);animation:glanz 4.5s ease-in-out infinite;
+}
+@keyframes glanz{0%,70%{left:-60%}100%{left:130%}}
+.knopf.rot,button.rot,button.gross.rot{background:linear-gradient(180deg,#ff8a7a,#d32f2f 55%,#9a1b1b);border:1px solid #6e1010;box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 6px 18px rgba(211,47,47,.3)}
+button.gross,button.mittel{background:linear-gradient(180deg,#2b2437,#1a1522);border:1px solid rgba(230,185,58,.28);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 3px 10px rgba(0,0,0,.35)}
+button.gross:not([disabled]):hover,button.mittel:not([disabled]):hover{border-color:var(--gold)}
+button[disabled]::after{display:none}
+
+/* ---------- Startmenü ---------- */
+#menue,#lobby,#hilfe{background:radial-gradient(ellipse at 50% 20%,rgba(230,185,58,.18),transparent 55%),radial-gradient(ellipse at 50% 120%,rgba(120,20,40,.35),transparent 60%),rgba(6,5,9,.7)}
+#menue .karteBox{max-width:540px;padding:28px 28px 22px}
+.emblem{display:flex;justify-content:center;margin:-6px 0 6px}
+.emblem svg{width:92px;height:92px;filter:drop-shadow(0 6px 18px rgba(230,185,58,.35));animation:schweben 5s ease-in-out infinite}
+@keyframes schweben{50%{transform:translateY(-4px) rotate(-2deg)}}
+.titel{font-family:var(--serif);font-weight:900;text-align:center;letter-spacing:.06em;font-size:clamp(44px,10vw,72px);
+  background:var(--goldtext);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 3px 0 rgba(0,0,0,.35))}
+.untertitel{text-align:center;font-family:var(--serif);font-style:italic;font-weight:700;color:#d9c79a;font-size:18px;letter-spacing:.03em}
+.story{background:linear-gradient(90deg,rgba(230,185,58,.1),rgba(230,185,58,.03));border-left:2px solid var(--gold);border-radius:4px 12px 12px 4px;color:#e9dfca}
+.feldLabel{color:var(--gold);letter-spacing:.24em;font-size:12px}
+.texteingabe{background:rgba(0,0,0,.35);border:1px solid rgba(230,185,58,.3);box-shadow:inset 0 2px 8px rgba(0,0,0,.4);transition:border-color .2s,box-shadow .2s}
+.texteingabe:focus{outline:none;border-color:var(--gold);box-shadow:inset 0 2px 8px rgba(0,0,0,.4),0 0 0 3px rgba(230,185,58,.15)}
+.tier{border-radius:50%;background:radial-gradient(circle at 35% 30%,#3a3046,#16121c 70%);border:2px solid rgba(230,185,58,.25);box-shadow:inset 0 2px 6px rgba(255,255,255,.06),0 4px 12px rgba(0,0,0,.4);font-size:32px}
+.tier small{bottom:-20px;color:#bfb39a}
+.tiere{gap:14px;margin-bottom:16px}
+.tier.an{border-color:var(--gold);box-shadow:0 0 0 3px rgba(230,185,58,.25),0 0 24px rgba(230,185,58,.35),inset 0 2px 6px rgba(255,255,255,.1);transform:translateY(-2px)}
+.tier.an small{color:var(--gold-hell)}
+.wahl{background:rgba(0,0,0,.3);border:1px solid rgba(230,185,58,.18);border-radius:12px;padding:3px;gap:3px}
+.wahl button{border:0;background:transparent;border-radius:9px;color:#bfb39a}
+.wahl button.an{background:linear-gradient(180deg,#f2cd5b,#c8941f);color:#2a1c02;font-weight:800;box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
+.fuss a{color:#bfb39a;text-decoration:none;border-bottom:1px solid transparent}
+.fuss a:hover{color:var(--gold-hell);border-color:var(--gold-linie)}
+.code{font-family:var(--serif);font-weight:900;font-size:56px;letter-spacing:.22em;background:var(--goldtext);-webkit-background-clip:text;background-clip:text;color:transparent}
+.codeRahmen{border:1px solid var(--gold-linie);border-radius:14px;background:rgba(0,0,0,.35);padding:6px 0 2px;margin:6px 0 10px;box-shadow:inset 0 0 20px rgba(230,185,58,.08)}
+.mitglied{background:linear-gradient(90deg,rgba(230,185,58,.08),rgba(255,255,255,.02));border:1px solid rgba(230,185,58,.15)}
+.mitglied .icon{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 35% 30%,#3a3046,#16121c);border:1px solid var(--gold-linie)}
+
+/* ---------- HUD ---------- */
+.kasse,.uhr,#aufgaben,.feedZeile,.slot,.eff,.hudKnopf,#emotes button,.tagInfo{
+  background:linear-gradient(180deg,rgba(26,21,34,.9),rgba(11,9,15,.92));border-color:rgba(230,185,58,.3)
+}
+.kasse{border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,241,193,.1)}
+.kasse .bank{font-family:var(--serif);font-weight:900;background:var(--goldtext);-webkit-background-clip:text;background-clip:text;color:transparent}
+.kasse .bank.ok{background:linear-gradient(180deg,#d9ffe8,#43d17a 60%,#1f9a52);-webkit-background-clip:text;background-clip:text}
+.balken{height:7px;background:#1b1622;box-shadow:inset 0 1px 3px rgba(0,0,0,.6);border:1px solid rgba(230,185,58,.15)}
+.balken i{background:linear-gradient(90deg,#9a6f12,#f2cd5b,#fff1c1);box-shadow:0 0 10px rgba(230,185,58,.5)}
+.uhr{font-family:var(--serif);font-weight:900;border-radius:16px;color:#f4ecd8}
+#aufgaben h3{font-family:var(--serif);font-style:italic;letter-spacing:.06em;text-transform:none;font-size:15px;color:var(--gold-hell)}
+.slot{border:1px solid rgba(230,185,58,.35);border-radius:50%;box-shadow:inset 0 2px 8px rgba(0,0,0,.5),0 4px 14px rgba(0,0,0,.4)}
+.slot:not(.leer){border-color:var(--gold);box-shadow:inset 0 2px 8px rgba(0,0,0,.4),0 0 16px rgba(230,185,58,.3)}
+.slot kbd{top:-6px;left:50%;transform:translateX(-50%);background:var(--gold);color:#2a1c02;border-radius:6px;padding:0 5px}
+#hinweis{background:linear-gradient(180deg,rgba(26,21,34,.95),rgba(11,9,15,.97));border:1px solid var(--gold);font-family:var(--serif);font-style:italic;font-weight:700;letter-spacing:.02em}
+.toast{background:linear-gradient(180deg,rgba(40,14,18,.96),rgba(20,8,10,.97))}
+.toast.gut{background:linear-gradient(180deg,rgba(14,40,24,.96),rgba(8,20,12,.97))}
+
+/* ---------- Spielfenster ---------- */
+#panel{border-left:1px solid var(--gold-linie);padding:18px 18px calc(28px + var(--sicher-u));
+  background:linear-gradient(180deg,rgba(24,19,31,.97),rgba(9,7,12,.985)),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Cpath d='M20 0L40 20L20 40L0 20Z' fill='none' stroke='%23e6b93a' stroke-opacity='.04'/%3E%3C/svg%3E")}
+#panelZu{background:radial-gradient(circle at 35% 30%,#3a3046,#16121c);border:1px solid var(--gold-linie);color:var(--gold-hell)}
+#panelZu:hover{border-color:var(--gold)}
+.panelKopf{padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid transparent;border-image:linear-gradient(90deg,transparent,var(--gold-linie),transparent) 1}
+.panelIcon{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;font-size:28px;
+  background:radial-gradient(circle at 35% 30%,#3a3046,#120e17 70%);border:2px solid var(--gold);box-shadow:0 0 0 4px rgba(230,185,58,.1),0 6px 16px rgba(0,0,0,.5)}
+.panelKopf h2{font-size:32px}
+.regeln summary{font-family:var(--serif);font-style:italic;color:var(--gold-hell);list-style:none}
+.regeln summary::before{content:"❖ ";color:var(--gold)}
+.regeln p{background:rgba(0,0,0,.25);border:1px solid rgba(230,185,58,.15);border-radius:10px;padding:8px 10px;color:#d6ccb8}
+.panelInhalt{gap:12px}
+.buehne{background:radial-gradient(ellipse at 50% 35%,#2c2440,#110d18 75%);border:1px solid rgba(230,185,58,.3);border-radius:18px;
+  box-shadow:inset 0 0 0 4px rgba(0,0,0,.35),inset 0 0 0 5px rgba(230,185,58,.18),inset 0 20px 40px rgba(0,0,0,.4)}
+.filz,.buehne.huetchen{background:radial-gradient(ellipse at 50% 40%,#2f8f55,#145a32 70%,#0d3f22);border:0;border-radius:22px;
+  box-shadow:inset 0 0 0 7px #2a1810,inset 0 0 0 9px #d4af37,inset 0 0 0 12px #1c120d,inset 0 18px 40px rgba(0,0,0,.45),0 10px 24px rgba(0,0,0,.4)}
+.filz.blau{background:radial-gradient(ellipse at 50% 40%,#2a5fb8,#143272 70%,#0c1f4a)}
+.filz.rotfilz{background:radial-gradient(ellipse at 50% 40%,#a12c3d,#5e1420 70%,#3e0c14)}
+.filz .label{font-family:var(--serif);font-style:italic;color:rgba(255,241,193,.75);letter-spacing:.08em}
+.filz .wert{font-family:var(--serif);font-weight:900;color:#fff1c1;text-shadow:0 2px 4px rgba(0,0,0,.5)}
+.buehne.strasse{background:linear-gradient(180deg,#3b4a52,#1d262b);box-shadow:inset 0 0 0 4px rgba(0,0,0,.35),inset 0 0 0 5px rgba(230,185,58,.18)}
+.automat{background:linear-gradient(180deg,#9b2a1b,#4a0f08);border:0;border-radius:20px;padding:18px;
+  box-shadow:inset 0 0 0 3px #f2cd5b,inset 0 0 0 6px #7a1a10,inset 0 0 30px rgba(0,0,0,.5),0 10px 24px rgba(0,0,0,.4)}
+.walze{border-radius:12px;background:linear-gradient(180deg,#d9d2c0,#fffdf6 22%,#fffdf6 78%,#d9d2c0);box-shadow:inset 0 10px 16px rgba(0,0,0,.35),inset 0 -10px 16px rgba(0,0,0,.35),0 0 0 2px #c9a227}
+.ergebnis{font-family:var(--serif);font-weight:900;letter-spacing:.01em;font-size:26px}
+.ergebnis.plus{background:linear-gradient(180deg,#e2ffee,#43d17a);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 12px rgba(67,209,122,.35))}
+.ergebnis.riesig{background:var(--goldtext);-webkit-background-clip:text;background-clip:text;color:transparent;font-size:36px;filter:drop-shadow(0 0 18px rgba(230,185,58,.55))}
+.ergebnis.minus{color:#ff7b7b}
+.topf{color:#cfc3a8}.topf b{font-family:var(--serif);font-weight:900;background:var(--goldtext);-webkit-background-clip:text;background-clip:text;color:transparent;font-size:22px}
+.tipp{font-family:var(--serif);font-style:italic}
+
+/* Einsatz: Messingschild + Chips */
+.einsatz{background:linear-gradient(180deg,rgba(0,0,0,.35),rgba(0,0,0,.2));border:1px solid rgba(230,185,58,.25);border-radius:16px;padding:12px 14px}
+.einsatzLabel{color:var(--gold);letter-spacing:.24em;font-size:12px}
+.einsatzWert{font-family:var(--serif);font-weight:900;font-size:26px;color:#2a1c02;border:1px solid #8a6210;
+  background:linear-gradient(180deg,#fff0b8,#e6b93a 55%,#c8941f);box-shadow:inset 0 1px 0 rgba(255,255,255,.7),inset 0 -2px 4px rgba(120,80,0,.3)}
+.einsatzWert.klein{font-size:18px}
+.chips{gap:10px;justify-items:center}
+.chips .chip{width:62px;height:62px;padding:0;border-radius:50%;display:grid;place-items:center;font-family:var(--serif);font-weight:900;font-size:15px;color:#fff;
+  text-shadow:0 1px 2px rgba(0,0,0,.6);border:0;position:relative;
+  background:radial-gradient(circle,var(--c) 0 46%,#fff 46% 50%,var(--c) 50% 62%,transparent 62%),repeating-conic-gradient(var(--c) 0 15deg,#fff 15deg 30deg);
+  box-shadow:0 4px 0 rgba(0,0,0,.35),0 6px 12px rgba(0,0,0,.4),inset 0 0 0 2px rgba(0,0,0,.15)}
+.chips .chip:nth-child(1){--c:#3b6fd8}.chips .chip:nth-child(2){--c:#2e9a56}.chips .chip:nth-child(3){--c:#c62f3a}.chips .chip:nth-child(4){--c:#151515}
+.chips .chip:nth-child(4){background:radial-gradient(circle,#151515 0 46%,#e6b93a 46% 50%,#151515 50% 62%,transparent 62%),repeating-conic-gradient(#151515 0 15deg,#e6b93a 15deg 30deg)}
+.chips .chip:hover{transform:translateY(-3px) rotate(-8deg)}
+.chips .chip:active{transform:translateY(1px)}
+.reihe .chip,.chip{background:linear-gradient(180deg,#2b2437,#1a1522);border:1px solid rgba(230,185,58,.28)}
+.chip.an{background:linear-gradient(180deg,#f2cd5b,#c8941f);color:#2a1c02;border-color:#8a6210}
+.einsatzInfo{color:#a89c82}
+.tabelle{background:rgba(0,0,0,.28);border:1px solid rgba(230,185,58,.15);border-radius:12px;color:#bfb39a}
+.tabelle .an{color:var(--gold-hell)}
+.mini{background:rgba(255,255,255,.06);border:1px solid rgba(230,185,58,.12)}
+
+/* Spielkarten */
+.karte{width:66px;height:94px;border-radius:9px;background:linear-gradient(160deg,#ffffff,#f3efe4);border:1px solid #cfc6b0;
+  box-shadow:0 6px 14px rgba(0,0,0,.45),inset 0 0 0 3px #fff,inset 0 0 0 4px rgba(200,170,90,.35);display:block;position:relative;color:#1a1a1a}
+.karte b{position:absolute;top:5px;left:7px;font-family:var(--serif);font-weight:900;font-size:19px;line-height:1}
+.karte i{position:absolute;inset:0;display:grid;place-items:center;font-size:34px;font-style:normal}
+.karte::after{content:attr(data-r);position:absolute;bottom:5px;right:7px;transform:rotate(180deg);font-family:var(--serif);font-weight:900;font-size:19px;line-height:1}
+.karte.zu{background:radial-gradient(circle at 50% 50%,#8e1414 0 30%,transparent 31%),repeating-linear-gradient(45deg,#7a1010 0 5px,#5a0a0a 5px 10px);border:1px solid #c9a227;box-shadow:0 6px 14px rgba(0,0,0,.45),inset 0 0 0 3px #f2e6c4,inset 0 0 0 5px #c9a227}
+.karte.zu::after{content:"🦈";inset:0;display:grid;place-items:center;transform:none;font-size:26px;filter:grayscale(.2) drop-shadow(0 1px 1px #000)}
+.karte.riesig{width:116px;height:164px}.karte.riesig b{font-size:30px;top:8px;left:10px}.karte.riesig i{font-size:60px}.karte.riesig::after{font-size:30px}
+.karte.gehalten{outline:0;box-shadow:0 0 0 3px var(--gold),0 0 20px rgba(230,185,58,.5),0 10px 18px rgba(0,0,0,.4)}
+
+/* Münze, Roulette, Rad, Felder */
+.muenze3d .seite{background:radial-gradient(circle at 35% 30%,#fff3c2,#f0c34a 40%,#b8860b 80%);border:4px solid #8a6210;box-shadow:inset 0 0 0 4px rgba(255,255,255,.25),inset 0 -6px 14px rgba(120,80,0,.4)}
+.feld{border:1px solid rgba(230,185,58,.18);font-family:var(--serif);font-weight:700}
+.feld.r{background:linear-gradient(180deg,#a31d22,#6e0f12)}.feld.s{background:linear-gradient(180deg,#232323,#0e0e0e)}.feld.g{background:linear-gradient(180deg,#2a7a3a,#145a24)}
+.feld.an{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold),0 0 14px rgba(230,185,58,.5)}
+.rouletteWahl{background:radial-gradient(ellipse at 50% 30%,#257a44,#124a28);padding:10px;border-radius:16px;box-shadow:inset 0 0 0 2px rgba(255,241,193,.5),inset 0 0 0 6px #1c120d}
+.rouletteWahl .klein{color:rgba(255,241,193,.8);font-family:var(--serif);font-style:italic}
+canvas.rad{filter:drop-shadow(0 10px 18px rgba(0,0,0,.55))}
+.turmFeld,.mine,.kz,.ente{border-color:rgba(230,185,58,.2)}
+.turmFeld.aktiv{border-color:var(--gold)}
+.mine{background:linear-gradient(180deg,#34404f,#222b36);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 3px 6px rgba(0,0,0,.35)}
+.mine.gem{background:linear-gradient(180deg,#2c7a4c,#174a2d)}
+.kz.treffer{background:linear-gradient(180deg,#fff0b8,#e6b93a);box-shadow:0 0 12px rgba(230,185,58,.6)}
+.ente{background:linear-gradient(180deg,#2b2437,#1a1522)}
+.ente small{font-family:var(--serif);font-weight:900}
+.becher{background:linear-gradient(90deg,#7a1010,#d32f2f 45%,#ff6b6b 55%,#7a1010);box-shadow:inset 0 -8px 0 #d4af37}
+
+/* ---------- Hinterzimmer & Dialoge ---------- */
+.dialog{background:radial-gradient(ellipse at 50% 30%,rgba(230,185,58,.08),transparent 60%),rgba(4,3,6,.66)}
+.sprecher .gesicht{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;font-size:40px;flex:none;
+  background:radial-gradient(circle at 35% 30%,#3a3046,#120e17 70%);border:2px solid var(--gold);box-shadow:0 0 0 4px rgba(230,185,58,.1)}
+.sprecher .rede{background:linear-gradient(180deg,rgba(255,241,193,.07),rgba(255,241,193,.02));border:1px solid rgba(230,185,58,.2);font-family:var(--serif);font-style:italic;color:#ece2cc;line-height:1.45}
+.sprecher .rede b{font-style:normal;color:var(--gold-hell)}
+.pill{background:rgba(0,0,0,.3);border:1px solid rgba(230,185,58,.2)}
+.pill b{font-family:var(--serif);font-weight:900;color:var(--gold-hell)}
+.ware{background:linear-gradient(180deg,#221c2c,#120e17);border:1px solid rgba(230,185,58,.25);border-radius:16px;position:relative;overflow:hidden;transition:transform .15s,border-color .2s,box-shadow .2s}
+.ware:not(.weg):not([disabled]):hover{transform:translateY(-3px);border-color:var(--gold);box-shadow:0 12px 26px rgba(0,0,0,.45),0 0 0 1px rgba(230,185,58,.25)}
+.ware .wIcon{width:58px;height:58px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 35% 30%,#3a3046,#120e17);border:1px solid var(--gold-linie);font-size:30px}
+.ware b{font-family:var(--serif);font-weight:900;color:var(--gold-hell);font-size:18px}
+.ware .preis{align-self:flex-start;background:linear-gradient(180deg,#fff0b8,#c8941f);color:#2a1c02;border-radius:999px;padding:2px 10px;font-weight:800;box-shadow:inset 0 1px 0 rgba(255,255,255,.6)}
+.ware[disabled]{opacity:.5}
+.stempel{font-family:var(--serif);font-weight:900;letter-spacing:.06em}
+.grossZahl{font-family:var(--serif);font-weight:900;background:var(--goldtext);-webkit-background-clip:text;background-clip:text;color:transparent}
+.statistik div{background:rgba(0,0,0,.28);border:1px solid rgba(230,185,58,.15)}
+.pfandListe button{background:linear-gradient(180deg,#221c2c,#120e17);border:1px solid rgba(230,185,58,.25);border-radius:16px}
+.pfandListe button b{font-family:var(--serif);font-weight:900;color:var(--gold-hell)}
+.pfandListe button:not([disabled]):hover{border-color:var(--gold)}
+#lade{background:radial-gradient(ellipse at 50% 40%,#231a10,#060508 70%);font-family:var(--serif);font-style:italic;color:#d9c79a;letter-spacing:.04em}
+
+/* Panel offen auf breitem Schirm: Ereigniszeilen unter die Kontoanzeige */
+@media (min-width:761px){body.panelAuf #feed{top:calc(124px + var(--sicher-o))}}
+@media (max-width:760px){.tiere{grid-template-columns:repeat(6,1fr);gap:6px}.tier{font-size:22px;border-width:1.5px}.tier small{font-size:9px;bottom:-16px}.chips .chip{width:54px;height:54px;font-size:13px}.titel{font-size:46px}}

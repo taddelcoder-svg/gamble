@@ -7,6 +7,7 @@
 <meta name="theme-color" content="#0b0a10">
 <title>Kredithai</title>
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="preload" href="/vendor/playfair-display-900.woff2" as="font" type="font/woff2" crossorigin>
 <style>
 @font-face{font-family:"Barlow Semi Condensed";font-weight:600;font-display:swap;src:url(/vendor/barlow-semi-condensed-600.woff2) format("woff2")}
 @font-face{font-family:"Barlow Semi Condensed";font-weight:700;font-display:swap;src:url(/vendor/barlow-semi-condensed-700.woff2) format("woff2")}
@@ -309,6 +310,7 @@ button.mittel{padding:10px;border-radius:10px;background:#2c2840;border:1px soli
   #feed{display:none}
 }
 </style>
+<link rel="stylesheet" href="/js/premium.css">
 </head>
 <body>
 <div id="lade">Kredithai lädt …</div>
@@ -349,7 +351,19 @@ button.mittel{padding:10px;border-radius:10px;background:#2c2840;border:1px soli
 <!-- Startmenü -->
 <section class="schirm" id="menue" hidden>
   <div class="karteBox">
-    <h1 class="titel">KREDIT&shy;HAI</h1>
+    <div class="emblem" aria-hidden="true"><svg viewBox="0 0 120 120">
+      <defs>
+        <linearGradient id="eg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3c4"/><stop offset=".45" stop-color="#f0c34a"/><stop offset=".8" stop-color="#a87a14"/><stop offset="1" stop-color="#f6dc8c"/></linearGradient>
+        <radialGradient id="eh" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#3a3046"/><stop offset="1" stop-color="#0d0a12"/></radialGradient>
+      </defs>
+      <circle cx="60" cy="60" r="56" fill="url(#eg)"/>
+      <circle cx="60" cy="60" r="49" fill="url(#eh)"/>
+      <circle cx="60" cy="60" r="44" fill="none" stroke="url(#eg)" stroke-width="1.5" stroke-dasharray="3 4"/>
+      <path d="M28 74c10-4 20-6 32-6s22 2 32 6c-8-2-17-3-26-3 2-14 0-30-6-42-4 14-10 26-20 36-4 3-8 6-12 9z" fill="url(#eg)"/>
+      <path d="M34 82h52" stroke="url(#eg)" stroke-width="2"/>
+      <text x="60" y="98" text-anchor="middle" font-family="Playfair Display,Georgia,serif" font-weight="900" font-size="10" letter-spacing="2" fill="url(#eg)">CASINO</text>
+    </svg></div>
+    <h1 class="titel">KREDITHAI</h1>
     <p class="untertitel">Zusammen zocken. Zusammen pleitegehen.</p>
     <div class="story">Ihr schuldet <b>Don Flosse</b> über eine Million. Jeden Morgen gibt er euch Jetons, jeden Abend will er seine Rate. Ein gemeinsames Konto – eine falsche Wette ruiniert alle. <span class="klein">(Nur Spielgeld.)</span></div>
     <label class="feldLabel" for="mName">Dein Name</label>
@@ -361,7 +375,7 @@ button.mittel{padding:10px;border-radius:10px;background:#2c2840;border:1px soli
       <button class="knopf" id="mNeu">👥 Raum für Freunde erstellen</button>
       <div class="zeile"><input class="texteingabe" id="mCode" maxlength="4" placeholder="CODE" style="text-transform:uppercase;text-align:center;letter-spacing:.2em;flex:1"><button class="knopf" id="mBeitreten" style="flex:1">Beitreten</button></div>
     </div>
-    <span class="feldLabel">Einstellungen</span>
+    <div class="trenner">Einstellungen</div>
     <div class="zeile"><span class="klein" style="flex:0 0 90px">Lauf</span><div class="wahl" id="mLaenge"><button data-w="kurz">Kurz · 8 Tage</button><button data-w="normal">Normal · 12 Tage</button></div></div>
     <div class="zeile" style="margin-top:6px"><span class="klein" style="flex:0 0 90px">Tageslänge</span><div class="wahl" id="mDauer"><button data-w="180">3 min</button><button data-w="300">5 min</button><button data-w="420">7 min</button></div></div>
     <div class="zeile" style="margin-top:6px"><span class="klein" style="flex:0 0 90px">Grafik</span><div class="wahl" id="mGrafik"><button data-w="niedrig">Niedrig</button><button data-w="mittel">Mittel</button><button data-w="hoch">Hoch</button></div></div>
@@ -374,7 +388,7 @@ button.mittel{padding:10px;border-radius:10px;background:#2c2840;border:1px soli
 <section class="schirm" id="lobby" hidden>
   <div class="karteBox">
     <h2 style="margin:0">Raum</h2>
-    <div class="code" id="lCode">----</div>
+    <div class="codeRahmen"><div class="code" id="lCode">----</div></div>
     <div class="zeile"><button class="knopf" id="lLink">🔗 Einladungslink kopieren</button></div>
     <div class="mitglieder" id="lMitglieder"></div>
     <div id="lEinst" class="klein"></div>
