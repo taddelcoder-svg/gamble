@@ -713,6 +713,7 @@
       }
     } else if (z) kamera = welt.kameraZiel(pos.x, pos.z, pos.yaw, kamAbstand, 3.9, { x:pos.x + Math.sin(pos.yaw) * 2.2, y:1.1, z:pos.z + Math.cos(pos.yaw) * 2.2 });
     else kamera = { x:Math.sin(jetzt / 6000) * 9, y:4.5, z:Math.cos(jetzt / 6000) * 6, lx:0, ly:1, lz:0 };
+    if (window.kredithai && window.kredithai.kameraFest) kamera = window.kredithai.kameraFest;   // nur zum Testen
     const me = meinSp();
     const sofort = kameraSprung && !!z; kameraSprung = false;
     welt.rendern(dt, { ich, meinTisch:panelTisch, kameraSofort:sofort, tempo:pos.tempo, kamera, tischInfo, z, zeit:zeitJetzt(), donLaune:laune, betrunken:me && me.eff.drink });

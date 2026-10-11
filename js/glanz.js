@@ -281,5 +281,120 @@
     };
   }
 
-  window.KHGlanz = { nachbearbeitung, umgebung, teppich, tischLicht, automatenReihe, bar, kordeln, staub, effekte, rund };
+  /* ---------- Wände: Vertäfelung, Goldleiste, Tapete, Pilaster, Stuckleiste ---------- */
+  const WAND = {
+    spelunke:{ tapete:['#3b1d12', '#5a2e1b'], paneel:0x2e1a10, einsatz:0x3d2416, leiste:0xc9a227 },
+    neon:{ tapete:['#0c0816', '#2a1450'], paneel:0x0d0a14, einsatz:0x17112a, leiste:0xff3df2 },
+    koralle:{ tapete:['#0a2f3a', '#145565'], paneel:0x0a2a33, einsatz:0x0f3a46, leiste:0xd4af37 },
+    penthouse:{ tapete:['#e6dccb', '#cdbf9f'], paneel:0x2b1a10, einsatz:0x3a2416, leiste:0xd4af37 }
+  };
+  function tapete(id) {
+    const P = WAND[id];
+    const [c, x] = leinwand(256, 256);
+    x.fillStyle = P.tapete[0]; x.fillRect(0, 0, 256, 256);
+    x.fillStyle = P.tapete[1]; x.strokeStyle = P.tapete[1]; x.lineWidth = 3;
+    // Damast-Ornament: Lilienform in Rautengitter
+    for (const [cx, cy] of [[64, 64], [192, 192], [192, 64], [64, 192]]) {
+      const klein = (cx + cy) % 256 !== 128 ? 1 : 0.6;
+      x.save(); x.translate(cx, cy); x.scale(klein, klein);
+      x.beginPath(); x.moveTo(0, -46); x.bezierCurveTo(24, -26, 24, 6, 0, 22); x.bezierCurveTo(-24, 6, -24, -26, 0, -46); x.fill();
+      for (const s of [-1, 1]) { x.beginPath(); x.moveTo(0, 10); x.bezierCurveTo(s * 34, 0, s * 44, 30, s * 20, 40); x.bezierCurveTo(s * 30, 26, s * 16, 18, 0, 22); x.fill(); }
+      x.beginPath(); x.arc(0, 34, 6, 0, 7); x.fill();
+      x.restore();
+    }
+    x.globalAlpha = 0.35;
+    for (let i = -256; i < 512; i += 64) { x.beginPath(); x.moveTo(i, 0); x.lineTo(i + 256, 256); x.stroke(); x.beginPath(); x.moveTo(i + 256, 0); x.lineTo(i, 256); x.stroke(); }
+    const t = new T.CanvasTexture(c); t.wrapS = t.wrapT = T.RepeatWrapping; t.anisotropy = 8;
+    return t;
+  }
+  // seiten: welche Wände volle Höhe bekommen (bei Aquarium/Fenstern nur unten)
+  function wandVerkleidung(th, W, D, H, seitenVoll, aussparen) {
+    const P = WAND[th.id], g = new T.Group();
+    const leisteM = th.id === 'neon' ? new T.MeshBasicMaterial({ color:new T.Color(P.leiste).multiplyScalar(1.3) }) : new T.MeshStandardMaterial({ color:P.leiste, metalness:1, roughness:0.28 });
+    const paneelM = new T.MeshStandardMaterial({ color:P.paneel, roughness:0.35, metalness:0.05 });
+    const einsatzM = new T.MeshStandardMaterial({ color:P.einsatz, roughness:0.3, metalness:0.05 });
+    const tex = tapete(th.id);
+    const waende = [
+      { lang:W, pos:(t, y, a) => new T.Vector3(t, y, -D / 2 + a), rot:0, voll:true },
+      { lang:W, pos:(t, y, a) => new T.Vector3(t, y, D / 2 - a), rot:Math.PI, voll:true },
+      { lang:D, pos:(t, y, a) => new T.Vector3(-W / 2 + a, y, t), rot:Math.PI / 2, voll:seitenVoll },
+      { lang:D, pos:(t, y, a) => new T.Vector3(W / 2 - a, y, t), rot:-Math.PI / 2, voll:seitenVoll }
+    ];
+    const einsaetze = [], pilaster = [], kapitelle = [];
+    for (const w of waende) {
+      const hUnten = w.voll ? 1.1 : 0.5;
+      // durchgehendes Paneel unten + Goldleiste
+      const p = new T.Mesh(geo('BoxGeometry', 1, 1, 1), paneelM); p.scale.set(w.lang, hUnten, 0.06); p.position.copy(w.pos(0, hUnten / 2, 0.03)); p.rotation.y = w.rot; g.add(p);
+      const l = new T.Mesh(geo('BoxGeometry', 1, 1, 1), leisteM); l.scale.set(w.lang, 0.05, 0.08); l.position.copy(w.pos(0, hUnten + 0.02, 0.04)); l.rotation.y = w.rot; g.add(l);
+      // Kassetten im Paneel
+      for (let t = -w.lang / 2 + 0.9; t < w.lang / 2 - 0.6; t += 1.5) if (!(aussparen && aussparen(w, t))) einsaetze.push({ p:w.pos(t, hUnten / 2, 0.065), rot:w.rot, h:hUnten - 0.25 });
+      if (!w.voll) continue;
+      // Tapete
+      const tt = tex.clone(); tt.needsUpdate = true; tt.repeat.set(w.lang / 1.6, (H - 1.4) / 1.6);
+      const tap = new T.Mesh(new T.PlaneGeometry(w.lang, H - 1.35), new T.MeshStandardMaterial({ map:tt, roughness:0.8 }));
+      tap.position.copy(w.pos(0, 1.15 + (H - 1.35) / 2, 0.012)); tap.rotation.y = w.rot; g.add(tap);
+      // Stuckleiste oben
+      const st = new T.Mesh(geo('BoxGeometry', 1, 1, 1), paneelM); st.scale.set(w.lang, 0.22, 0.16); st.position.copy(w.pos(0, H - 0.11, 0.08)); st.rotation.y = w.rot; g.add(st);
+      const st2 = new T.Mesh(geo('BoxGeometry', 1, 1, 1), leisteM); st2.scale.set(w.lang, 0.04, 0.2); st2.position.copy(w.pos(0, H - 0.24, 0.1)); st2.rotation.y = w.rot; g.add(st2);
+      // Pilaster
+      for (let t = -w.lang / 2 + 2; t < w.lang / 2 - 1; t += 4.25) if (!(aussparen && aussparen(w, t))) { pilaster.push({ p:w.pos(t, H / 2, 0.08), rot:w.rot }); kapitelle.push({ p:w.pos(t, H - 0.42, 0.11), rot:w.rot }); }
+    }
+    const m4 = new T.Matrix4(), q = new T.Quaternion(), ach = new T.Vector3(0, 1, 0);
+    const inst = (liste, geom, m, skala) => {
+      const im = new T.InstancedMesh(geom, m, Math.max(1, liste.length));
+      liste.forEach((e, i) => { q.setFromAxisAngle(ach, e.rot); m4.compose(e.p, q, skala(e)); im.setMatrixAt(i, m4); });
+      im.count = liste.length; im.receiveShadow = true; g.add(im); return im;
+    };
+    inst(einsaetze, geo('BoxGeometry', 1, 1, 1), einsatzM, e => new T.Vector3(1.2, e.h, 0.03));
+    inst(einsaetze, geo('BoxGeometry', 1, 1, 1), leisteM, e => new T.Vector3(1.26, e.h + 0.06, 0.01)).position.z = 0;
+    inst(pilaster, geo('BoxGeometry', 1, 1, 1), paneelM, () => new T.Vector3(0.38, H, 0.14));
+    inst(kapitelle, geo('BoxGeometry', 1, 1, 1), leisteM, () => new T.Vector3(0.5, 0.16, 0.2));
+    inst(pilaster.map(e => ({ p:e.p.clone().setY(0.6), rot:e.rot })), geo('BoxGeometry', 1, 1, 1), leisteM, () => new T.Vector3(0.46, 0.06, 0.18));
+    g.traverse(o => { if (o.isMesh) o.userData.keinSchatten = true; });
+    return g;
+  }
+
+  /* ---------- Kassettendecke ---------- */
+  function decke(th, W, D, H) {
+    const g = new T.Group();
+    const P = WAND[th.id];
+    const balkenM = new T.MeshStandardMaterial({ color:th.id === 'penthouse' ? 0xd9cfbd : P.paneel, roughness:0.5 });
+    const goldM = th.id === 'neon' ? new T.MeshBasicMaterial({ color:new T.Color(th.neon[1]).multiplyScalar(1.2) }) : new T.MeshStandardMaterial({ color:0xc9a227, metalness:1, roughness:0.3 });
+    const xs = [], zs = [];
+    for (let x = -W / 2 + 4; x < W / 2; x += 4) xs.push(x);
+    for (let z = -D / 2 + 3.5; z < D / 2; z += 3.5) zs.push(z);
+    const n = xs.length + zs.length;
+    const balken = new T.InstancedMesh(geo('BoxGeometry', 1, 1, 1), balkenM, n), trim = new T.InstancedMesh(geo('BoxGeometry', 1, 1, 1), goldM, n * 2);
+    const m4 = new T.Matrix4(), q = new T.Quaternion(), p = new T.Vector3(), s = new T.Vector3();
+    let i = 0, j = 0;
+    for (const x of xs) { m4.compose(p.set(x, H - 0.16, 0), q, s.set(0.35, 0.32, D)); balken.setMatrixAt(i++, m4); for (const o of [-1, 1]) { m4.compose(p.set(x + o * 0.19, H - 0.3, 0), q, s.set(0.03, 0.03, D)); trim.setMatrixAt(j++, m4); } }
+    for (const z of zs) { m4.compose(p.set(0, H - 0.16, z), q, s.set(W, 0.32, 0.35)); balken.setMatrixAt(i++, m4); for (const o of [-1, 1]) { m4.compose(p.set(0, H - 0.3, z + o * 0.19), q, s.set(W, 0.03, 0.03)); trim.setMatrixAt(j++, m4); } }
+    g.add(balken, trim);
+    g.traverse(o => { if (o.isMesh) o.userData.keinSchatten = true; });
+    return g;
+  }
+
+  /* ---------- Spieltisch-Filz mit eingedrucktem Logo ---------- */
+  const filzCache = new Map();
+  function filzTextur(farbe) {
+    if (filzCache.has(farbe)) return filzCache.get(farbe);
+    const [c, x] = leinwand(512, 512);
+    const f = new T.Color(farbe);
+    x.fillStyle = '#' + f.getHexString(); x.fillRect(0, 0, 512, 512);
+    const d = x.getImageData(0, 0, 512, 512);
+    for (let i = 0; i < d.data.length; i += 4) { const n = (Math.random() - 0.5) * 14; d.data[i] += n; d.data[i + 1] += n; d.data[i + 2] += n; }
+    x.putImageData(d, 0, 0);
+    const v = x.createRadialGradient(256, 256, 60, 256, 256, 300); v.addColorStop(0, 'rgba(255,255,255,.08)'); v.addColorStop(1, 'rgba(0,0,0,.35)');
+    x.fillStyle = v; x.fillRect(0, 0, 512, 512);
+    x.strokeStyle = 'rgba(232,185,35,.55)'; x.lineWidth = 4; x.beginPath(); x.ellipse(256, 256, 220, 220, 0, 0, 7); x.stroke();
+    x.lineWidth = 1.5; x.beginPath(); x.ellipse(256, 256, 208, 208, 0, 0, 7); x.stroke();
+    x.fillStyle = 'rgba(232,185,35,.6)'; x.font = '800 54px "Barlow Semi Condensed",sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
+    x.fillText('KREDITHAI', 256, 236);
+    x.font = '700 22px "Barlow Semi Condensed",sans-serif'; x.fillText('★ CASINO ★', 256, 284);
+    const t = new T.CanvasTexture(c); t.anisotropy = 8;
+    filzCache.set(farbe, t);
+    return t;
+  }
+
+  window.KHGlanz = { wandVerkleidung, decke, filzTextur, nachbearbeitung, umgebung, teppich, tischLicht, automatenReihe, bar, kordeln, staub, effekte, rund };
 })();

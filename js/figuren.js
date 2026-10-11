@@ -52,103 +52,199 @@
   };
   const NAMEN = { loewe:'Löwe', pinguin:'Pinguin', fuchs:'Fuchs', waschbaer:'Waschbär', baer:'Bär', hase:'Hase' };
 
+  // Eigenes Material mit Rauheit/Metall (gecacht)
+  function stoff(farbe, rau, metall = 0, extra) {
+    const k = 'S' + farbe + ':' + rau + ':' + metall + (extra ? JSON.stringify(extra) : '');
+    if (!mats.has(k)) { const m = new T.MeshStandardMaterial({ color:farbe, roughness:rau, metalness:metall, ...extra }); m._geteilt = true; mats.set(k, m); }
+    return mats.get(k);
+  }
+  const hell = (f, a) => new T.Color(f).lerp(new T.Color(0xffffff), a).getHex();
+  const dunkel = (f, a) => new T.Color(f).multiplyScalar(1 - a).getHex();
+  // Körper eines Sakkos als Drehkörper (weich geformt statt Zylinder)
+  const RUMPF_PROFIL = [[0.001, 0.30], [0.165, 0.30], [0.19, 0.36], [0.205, 0.45], [0.205, 0.55], [0.19, 0.62], [0.15, 0.665], [0.08, 0.69], [0.001, 0.695]];
+  function rumpfGeo() { return geos.get('rumpf') || (geos.set('rumpf', Object.assign(new T.LatheGeometry(RUMPF_PROFIL.map(([r, y]) => new T.Vector2(r, y)), 28), { _geteilt:true })), geos.get('rumpf')); }
+
+  const AUGEN = { loewe:0x8d5a12, pinguin:0x3b2a1a, fuchs:0x6b8e23, waschbaer:0x3b2a1a, baer:0x4e2f14, hase:0xd14d72, katze:0x3d9a3d, hund:0x5b3a1a, maus:0x222222, otter:0x3b2a1a };
+
   function tier(art, o = {}) {
     const A = ARTEN[art] || ARTEN.loewe;
     const fell = A.fell, anzug = o.anzug != null ? o.anzug : A.anzug;
+    const mFell = stoff(fell, 0.85), mBauch = stoff(A.bauch, 0.85);
+    const mAnzug = stoff(anzug, 0.5, 0.05), mRevers = stoff(hell(anzug, 0.08), 0.18, 0.15), mHemd = stoff(0xfbfbf8, 0.55);
+    const mGold = stoff(0xe2b33c, 0.25, 1), mLack = stoff(0x0c0c0e, 0.12, 0.2), mSchwarz = stoff(0x111114, 0.35);
+    const fliege = o.fliege != null ? o.fliege : A.fliege, mFliege = stoff(fliege, 0.35, 0.05);
     const g = new T.Group();
-    const k = new T.Group(); g.add(k);            // alles, was wippt
-    // Beine mit Hose oder Unterhose, Füße mit oder ohne Schuhe
+    const k = new T.Group(); g.add(k);
+    const M = (geom, m, x = 0, y = 0, z = 0) => { const t = new T.Mesh(geom, m); t.position.set(x, y, z); return t; };
+    const K = (r, m, x, y, z, s = 24) => M(geo('SphereGeometry', r, s, Math.round(s * 0.75)), m, x, y, z);
+    const Z = (r1, r2, h, m, x, y, z, s = 20) => M(geo('CylinderGeometry', r1, r2, h, s), m, x, y, z);
+
+    /* Beine: Hose oder Unterhose, Lackschuhe oder nackte Pfoten */
     const beine = [];
     for (const s of [-1, 1]) {
-      const b = new T.Group(); b.position.set(s * 0.1, 0.3, 0);
-      const hose = zyl(0.075, 0.07, 0.3, anzug, 0, -0.12, 0, 8); b.add(hose);
-      const bein = zyl(0.06, 0.06, 0.28, fell, 0, -0.12, 0, 8); bein.visible = false; b.add(bein);
-      const schuh = box(0.13, 0.08, 0.22, 0x1a1a1a, 0, -0.27, 0.04); b.add(schuh);
-      const fuss = kugel(0.075, fell, 0, -0.27, 0.03, 8); fuss.scale.set(1, 0.7, 1.4); fuss.visible = false; b.add(fuss);
+      const b = new T.Group(); b.position.set(s * 0.085, 0.32, 0);
+      const hose = Z(0.066, 0.058, 0.27, mAnzug, 0, -0.13, 0); b.add(hose);
+      const bein = Z(0.052, 0.048, 0.25, mFell, 0, -0.13, 0); bein.visible = false; b.add(bein);
+      const schuh = new T.Group();
+      const sch = K(0.07, mLack, 0, -0.285, 0.035); sch.scale.set(1, 0.62, 1.55); schuh.add(sch);
+      const sohle = M(geo('BoxGeometry', 0.13, 0.02, 0.21), mSchwarz, 0, -0.312, 0.035); schuh.add(sohle);
+      b.add(schuh);
+      const fuss = K(0.068, mFell, 0, -0.29, 0.03); fuss.scale.set(1, 0.65, 1.4); fuss.visible = false; b.add(fuss);
+      for (const z2 of [-1, 0, 1]) { const zeh = K(0.022, mBauch, z2 * 0.03, -0.3, 0.115); zeh.visible = false; fuss.zehen = (fuss.zehen || []).concat(zeh); b.add(zeh); }
       b.teile = { hose, bein, schuh, fuss };
       g.add(b); beine.push(b);
     }
-    const unterhose = zyl(0.2, 0.21, 0.14, new T.MeshLambertMaterial({ map:herzchen() }), 0, 0.3, 0, 14); unterhose.visible = false; k.add(unterhose);
-    // Rumpf: Sakko, Hemd, Fliege
-    const rumpf = zyl(0.2, 0.22, 0.42, anzug, 0, 0.52, 0, 14); k.add(rumpf);
-    const hemd = box(0.13, 0.3, 0.04, 0xfafafa, 0, 0.58, 0.19); k.add(hemd);
-    if (art === 'pinguin' || o.bauchFrei) { const b = kugel(0.15, A.bauch, 0, 0.5, 0.12, 10); b.scale.set(1, 1.3, 0.5); k.add(b); }
-    for (const s of [-1, 1]) { const f = kegel(0.045, 0.09, o.fliege != null ? o.fliege : A.fliege, s * 0.045, 0.72, 0.215, 6); f.rotation.z = s * Math.PI / 2; k.add(f); }
-    k.add(kugel(0.025, o.fliege != null ? o.fliege : A.fliege, 0, 0.72, 0.22, 6));
-    if (o.weste) k.add(box(0.3, 0.26, 0.04, o.weste, 0, 0.5, 0.18));
-    // Arme
+    const unterhose = Z(0.19, 0.2, 0.13, new T.MeshStandardMaterial({ map:herzchen(), roughness:0.7 }), 0, 0.31, 0, 24); unterhose.visible = false; k.add(unterhose);
+
+    /* Rumpf: Sakko, Hemd-Dreieck, Satin-Revers, Goldknöpfe, Einstecktuch, Fliege */
+    const rumpf = M(rumpfGeo(), mAnzug); k.add(rumpf);
+    if (art === 'pinguin') { const bb = K(0.15, mBauch, 0, 0.47, 0.085); bb.scale.set(1, 1.25, 0.7); k.add(bb); }
+    const hemd = M(geo('ConeGeometry', 0.1, 0.26, 3), mHemd, 0, 0.58, 0.17); hemd.rotation.set(Math.PI, 0, 0); hemd.scale.z = 0.35; k.add(hemd);
+    for (const s of [-1, 1]) {
+      const rv = M(geo('BoxGeometry', 0.075, 0.2, 0.014), mRevers, s * 0.085, 0.585, 0.183); rv.rotation.set(-0.12, s * 0.3, s * 0.3); k.add(rv);
+    }
+    for (const y of [0.44, 0.38]) k.add(K(0.012, mGold, 0, y, 0.203, 10));
+    const tuch = M(geo('BoxGeometry', 0.05, 0.035, 0.01), stoff(hell(fliege, 0.2), 0.4), 0.12, 0.58, 0.178); tuch.rotation.y = 0.35; k.add(tuch);
+    for (const s of [-1, 1]) { const f = K(0.034, mFliege, s * 0.038, 0.665, 0.172, 14); f.scale.set(1.25, 0.8, 0.5); k.add(f); }
+    k.add(K(0.016, mFliege, 0, 0.665, 0.18, 10));
+    if (o.weste) { const w = M(geo('BoxGeometry', 0.26, 0.22, 0.02), stoff(o.weste, 0.45), 0, 0.45, 0.192); k.add(w); }
+
+    /* Arme mit weißen Manschetten und Gold-Manschettenknöpfen */
     const arme = [];
     for (const s of [-1, 1]) {
-      const a = new T.Group(); a.position.set(s * 0.25, 0.68, 0);
-      a.add(zyl(0.055, 0.05, 0.3, anzug, 0, -0.13, 0, 8));
-      a.add(kugel(0.06, fell, 0, -0.29, 0.01, 8));
-      if (s === -1) { const uhr = zyl(0.058, 0.058, 0.04, 0xe8b923, 0, -0.24, 0, 10); a.add(uhr); a.uhr = uhr; }
-      a.rotation.x = -0.15;
+      const a = new T.Group(); a.position.set(s * 0.205, 0.625, 0);
+      a.add(K(0.058, mAnzug, 0, 0, 0, 16));
+      a.add(Z(0.052, 0.046, 0.26, mAnzug, 0, -0.13, 0.01, 16));
+      a.add(Z(0.047, 0.047, 0.035, mHemd, 0, -0.27, 0.012, 16));
+      a.add(K(0.009, mGold, s * 0.03, -0.27, 0.035, 8));
+      const pfote = K(0.052, mFell, 0, -0.32, 0.018, 18); pfote.scale.set(1, 1.05, 0.95); a.add(pfote);
+      if (s === -1) { const uhr = new T.Mesh(geo('TorusGeometry', 0.046, 0.009, 8, 20), mGold); uhr.rotation.x = Math.PI / 2; uhr.position.set(0, -0.245, 0.012); a.add(uhr); a.uhr = uhr; }
+      a.rotation.x = -0.12; a.rotation.z = s * 0.08;
       k.add(a); arme.push(a);
     }
-    // Kopf
-    const kopf = new T.Group(); kopf.position.y = 0.98; k.add(kopf);
-    kopf.add(kugel(0.22, fell, 0, 0, 0, 14));
-    if (A.extra === 'maehne') { const m = kugel(0.31, A.mfarbe, 0, 0, -0.06, 12); m.scale.set(1, 1, 0.75); kopf.add(m); }
-    for (const s of [-1, 1]) { kopf.add(kugel(0.033, 0x1a1a1a, s * 0.08, 0.04, 0.19, 8)); kopf.add(kugel(0.011, 0xffffff, s * 0.08 + 0.011, 0.055, 0.218, 6)); }
-    if (A.extra === 'maske') kopf.add(box(0.34, 0.08, 0.05, 0x2d2d30, 0, 0.04, 0.17));
-    switch (A.maul) {
-      case 'kurz': { const m = kugel(0.095, A.bauch, 0, -0.07, 0.16, 10); m.scale.set(1.2, 0.8, 0.8); kopf.add(m); kopf.add(kugel(0.033, 0x2a1a14, 0, -0.03, 0.25, 8)); break; }
-      case 'spitz': { const m = kegel(0.085, 0.2, A.bauch, 0, -0.06, 0.23); m.rotation.x = Math.PI / 2; kopf.add(m); kopf.add(kugel(0.028, 0x1a1a1a, 0, -0.06, 0.33, 6)); break; }
-      case 'schnabel': kopf.add(box(0.15, 0.05, 0.15, A.schnabel, 0, -0.06, 0.23)); break;
-    }
-    const ohr = (x, y, z, rz) => {
-      switch (A.ohren) {
-        case 'rund': return kugel(0.075, fell, x, y, z, 8);
-        case 'gross': { const q = kugel(0.12, fell, x * 1.2, y + 0.02, z, 10); q.scale.z = 0.4; return q; }
-        case 'spitz': { const q = kegel(0.075, 0.16, fell, x, y + 0.04, z, 6); q.rotation.z = rz; return q; }
-        case 'lang': { const q = kugel(0.06, fell, x * 0.6, y + 0.21, z, 8); q.scale.set(0.8, 3, 0.6); q.rotation.z = rz * 0.5; return q; }
-        case 'schlapp': { const q = kugel(0.075, 0x7a5233, x * 1.25, y - 0.12, z, 8); q.scale.set(0.6, 1.6, 0.8); return q; }
+
+    /* Kopf: groß, weich, mit Augen, Brauen, Wangen */
+    const kopf = new T.Group(); kopf.position.y = 0.9; k.add(kopf);
+    const schaedel = K(0.225, mFell, 0, 0, 0, 32); schaedel.scale.set(1, 0.94, 0.96); kopf.add(schaedel);
+    if (A.extra === 'maehne') {
+      const mM = stoff(A.mfarbe, 0.9), mM2 = stoff(hell(A.mfarbe, 0.15), 0.9);
+      for (let ring = 0; ring < 2; ring++) for (let i = 0; i < 14; i++) {
+        const w = i / 14 * Math.PI * 2 + ring * 0.22, r = ring ? 0.25 : 0.215;
+        const t = M(geo('ConeGeometry', ring ? 0.085 : 0.075, ring ? 0.2 : 0.17, 10), ring ? mM : mM2, Math.cos(w) * r, Math.sin(w) * r * 0.95, -0.07 - ring * 0.04);
+        t.rotation.z = w - Math.PI / 2; t.rotation.x = -0.35; kopf.add(t);
       }
-      return null;
+      const hinten = K(0.24, mM, 0, 0.0, -0.09, 24); hinten.scale.set(1, 1, 0.6); kopf.add(hinten);
+    }
+    // Augen
+    const iris = stoff(AUGEN[art] || 0x3b2a1a, 0.25), weiss = stoff(0xffffff, 0.15), pupille = stoff(0x050505, 0.1);
+    const glanz = new T.MeshBasicMaterial({ color:0xffffff });
+    const lider = [];
+    for (const s of [-1, 1]) {
+      const auge = new T.Group(); auge.position.set(s * 0.083, 0.035, 0.178); auge.rotation.y = s * 0.28;
+      const ap = K(0.052, weiss, 0, 0, 0, 20); ap.scale.set(0.9, 1, 0.55); auge.add(ap);
+      const ir = K(0.033, iris, 0, -0.004, 0.022, 16); ir.scale.z = 0.5; auge.add(ir);
+      const pu = K(0.019, pupille, 0, -0.004, 0.033, 12); pu.scale.z = 0.5; auge.add(pu);
+      auge.add(M(geo('SphereGeometry', 0.008, 8, 6), glanz, s * -0.012 + 0.006, 0.012, 0.04));
+      const lid = K(0.056, mFell, 0, 0, 0.002, 20); lid.scale.set(0.95, 1.05, 0.6); lid.scale.y = 0.001; lid.position.y = 0.05; auge.add(lid); lider.push(lid);
+      const braue = M(geo('BoxGeometry', 0.055, 0.012, 0.012), stoff(dunkel(art === 'pinguin' ? 0x888888 : fell, 0.55), 0.6), s * 0.004, 0.068, 0.02);
+      braue.rotation.z = -s * 0.15; auge.add(braue); auge.braue = braue;
+      kopf.add(auge);
+    }
+    if (art !== 'pinguin') for (const s of [-1, 1]) { const w = K(0.035, stoff(0xff8fa3, 0.8, 0, { transparent:true, opacity:0.45 }), s * 0.13, -0.05, 0.165, 12); w.scale.set(1, 0.6, 0.3); kopf.add(w); }
+    if (A.extra === 'maske') { const mk = K(0.1, stoff(0x2d2d30, 0.8), 0, 0.03, 0.16, 20); mk.scale.set(1.95, 0.55, 0.5); kopf.add(mk); kopf.children.forEach(c => { if (c.type === 'Group') c.position.z += 0.012; }); }
+    // Schnauze
+    switch (A.maul) {
+      case 'kurz': {
+        const m = K(0.09, mBauch, 0, -0.075, 0.155, 20); m.scale.set(1.25, 0.82, 0.85); kopf.add(m);
+        const n = K(0.034, stoff(0x2a1712, 0.3), 0, -0.04, 0.23, 14); n.scale.set(1.25, 0.85, 0.8); kopf.add(n);
+        kopf.add(M(geo('SphereGeometry', 0.008, 6, 4), glanz, -0.01, -0.03, 0.255));
+        const mund = M(geo('TorusGeometry', 0.028, 0.005, 6, 12, Math.PI), stoff(0x3a1a14, 0.6), 0, -0.1, 0.225); mund.rotation.z = Math.PI; kopf.add(mund);
+        break;
+      }
+      case 'spitz': {
+        const m = M(geo('ConeGeometry', 0.085, 0.2, 18), mBauch, 0, -0.06, 0.24); m.rotation.x = Math.PI / 2; kopf.add(m);
+        kopf.add(K(0.026, stoff(0x151515, 0.3), 0, -0.06, 0.34, 12));
+        break;
+      }
+      case 'schnabel': {
+        const ob = M(geo('ConeGeometry', 0.06, 0.15, 16), stoff(A.schnabel, 0.4), 0, -0.04, 0.26); ob.rotation.x = Math.PI / 2; ob.scale.set(1.4, 1, 0.6); kopf.add(ob);
+        const ub = M(geo('ConeGeometry', 0.05, 0.11, 16), stoff(dunkel(A.schnabel, 0.15), 0.4), 0, -0.075, 0.245); ub.rotation.x = Math.PI / 2; ub.scale.set(1.3, 1, 0.5); kopf.add(ub);
+        const ges = K(0.16, mBauch, 0, -0.01, 0.105, 24); ges.scale.set(1.15, 1.0, 0.75); kopf.add(ges); kopf.children.forEach(c => { if (c.type === 'Group') c.position.z += 0.035; });
+        break;
+      }
+    }
+    // Ohren mit Innenfarbe
+    const innen = stoff(A.innen || 0xf2a7b5, 0.8);
+    const ohr = s => {
+      const gr = new T.Group();
+      switch (A.ohren) {
+        case 'rund': { const a = K(0.075, mFell, 0, 0, 0, 16); a.scale.z = 0.55; gr.add(a); const b = K(0.048, innen, 0, 0, 0.02, 14); b.scale.z = 0.4; gr.add(b); gr.position.set(s * 0.15, 0.17, -0.02); break; }
+        case 'gross': { const a = K(0.12, mFell, 0, 0, 0, 18); a.scale.z = 0.3; gr.add(a); const b = K(0.085, innen, 0, 0, 0.018, 16); b.scale.z = 0.25; gr.add(b); gr.position.set(s * 0.19, 0.17, -0.02); break; }
+        case 'spitz': { const a = M(geo('ConeGeometry', 0.075, 0.18, 14), mFell, 0, 0.06, 0); a.scale.z = 0.5; gr.add(a); const b = M(geo('ConeGeometry', 0.045, 0.12, 12), innen, 0, 0.045, 0.02); b.scale.z = 0.35; gr.add(b); gr.position.set(s * 0.14, 0.15, -0.02); gr.rotation.z = -s * 0.32; break; }
+        case 'lang': { const a = K(0.06, mFell, 0, 0.17, 0, 16); a.scale.set(0.8, 3, 0.55); gr.add(a); const b = K(0.04, innen, 0, 0.17, 0.02, 14); b.scale.set(0.7, 2.7, 0.35); gr.add(b); gr.position.set(s * 0.085, 0.13, -0.02); gr.rotation.z = -s * 0.16; break; }
+        case 'schlapp': { const a = K(0.08, stoff(dunkel(fell, 0.3), 0.85), 0, -0.1, 0, 16); a.scale.set(0.6, 1.6, 0.8); gr.add(a); gr.position.set(s * 0.2, 0.08, -0.02); gr.rotation.z = s * 0.25; break; }
+        default: return null;
+      }
+      return gr;
     };
-    for (const s of [-1, 1]) { const e = ohr(s * 0.15, 0.16, -0.02, -s * 0.35); if (e) kopf.add(e); }
-    if (A.extra === 'schwanz') { const sw = kugel(0.1, fell, 0, 0.4, -0.3, 8); sw.scale.set(0.8, 0.8, 2); g.add(sw); g.add(kugel(0.06, 0xffffff, 0, 0.42, -0.46, 6)); }
-    if (art === 'waschbaer') for (let i = 0; i < 3; i++) g.add(kugel(0.07, i % 2 ? 0x2d2d30 : fell, 0, 0.36 + i * 0.02, -0.26 - i * 0.1, 8));
+    for (const s of [-1, 1]) { const e = ohr(s); if (e) kopf.add(e); }
+    // Schwänze
+    if (A.extra === 'schwanz') { const sw = K(0.1, mFell, 0, 0.36, -0.28, 18); sw.scale.set(0.85, 0.85, 2.1); sw.rotation.x = 0.4; g.add(sw); const sp = K(0.07, mBauch, 0, 0.45, -0.47, 14); sp.scale.set(0.9, 0.9, 1.3); g.add(sp); }
+    if (art === 'waschbaer') for (let i = 0; i < 4; i++) g.add(K(0.07 - i * 0.004, i % 2 ? stoff(0x2d2d30, 0.85) : mFell, 0, 0.33 + i * 0.03, -0.25 - i * 0.085, 14));
+    if (art === 'hase') g.add(K(0.06, mBauch, 0, 0.36, -0.2, 14));
     // Sonnenbrille
     const brille = new T.Group();
-    for (const s of [-1, 1]) brille.add(box(0.1, 0.06, 0.02, 0x111111, s * 0.075, 0.045, 0.215));
-    brille.add(box(0.06, 0.015, 0.02, 0x111111, 0, 0.06, 0.215));
+    const glas = stoff(0x101014, 0.06, 0.6);
+    for (const s of [-1, 1]) { const gl = Z(0.05, 0.05, 0.014, glas, s * 0.083, 0.035, 0.235, 20); gl.rotation.x = Math.PI / 2; gl.rotation.z = s * 0.28; gl.scale.set(1.1, 1, 0.85); brille.add(gl); }
+    brille.add(M(geo('BoxGeometry', 0.05, 0.01, 0.01), mGold, 0, 0.05, 0.24));
+    for (const s of [-1, 1]) { const b2 = M(geo('BoxGeometry', 0.008, 0.008, 0.16), mGold, s * 0.14, 0.05, 0.16); brille.add(b2); }
+    // lässig auf die Stirn geschoben, damit man die Augen sieht
+    brille.position.set(0, 0.105, -0.03); brille.rotation.x = -0.32;
     kopf.add(brille);
     // Hut
     if (o.hut) {
-      const h = new T.Group(); h.position.y = 0.17;
-      h.add(zyl(0.3, 0.3, 0.02, o.hut, 0, 0, 0, 16));
-      h.add(zyl(0.17, 0.19, 0.18, o.hut, 0, 0.1, 0, 14));
-      h.add(zyl(0.192, 0.192, 0.04, o.hutband || 0xffffff, 0, 0.04, 0, 14));
+      const h = new T.Group(); h.position.y = 0.165;
+      const mHut = stoff(o.hut, 0.55);
+      h.add(Z(0.29, 0.3, 0.018, mHut, 0, 0, 0, 28));
+      h.add(Z(0.165, 0.185, 0.17, mHut, 0, 0.09, 0, 24));
+      h.add(Z(0.187, 0.187, 0.04, stoff(o.hutband || 0x222222, 0.4), 0, 0.03, 0, 24));
       h.rotation.x = -0.1;
       kopf.add(h);
     }
     g.arme = arme; g.beine = beine; g.koerper = k; g.kopf = kopf; g.brille = brille; g.unterhose = unterhose; g.rumpf = rumpf;
     g.skala = o.skala || 1.5;
     g.scale.setScalar(g.skala);
-    // Pfand-Zustand zeigen
     g.pfand = p => {
       p = p || {};
-      for (const b of beine) { b.teile.schuh.visible = !p.schuhe; b.teile.fuss.visible = !!p.schuhe; b.teile.hose.visible = !p.hose; b.teile.bein.visible = !!p.hose; }
+      for (const b of beine) { b.teile.schuh.visible = !p.schuhe; b.teile.fuss.visible = !!p.schuhe; (b.teile.fuss.zehen || []).forEach(z2 => z2.visible = !!p.schuhe); b.teile.hose.visible = !p.hose; b.teile.bein.visible = !!p.hose; }
       unterhose.visible = !!p.hose;
       brille.visible = !p.brille;
       if (arme[0].uhr) arme[0].uhr.visible = !p.uhr;
     };
     g.schritt = 0; g.jubel = 0; g.frust = 0;
+    let blinzel = 2 + Math.random() * 3, zeit = Math.random() * 10;
     g.animieren = (dt, tempo, spielt, t) => {
+      zeit += dt;
       g.schritt += dt * tempo * 8;
       const sw = tempo > 0.1 ? Math.sin(g.schritt) : 0;
-      beine[0].rotation.x = sw * 0.5; beine[1].rotation.x = -sw * 0.5;
-      k.position.y = Math.abs(sw) * 0.03;
-      let a0 = -0.15 + sw * 0.5, a1 = -0.15 - sw * 0.5;
-      if (spielt) { a0 = -1.0 + Math.sin(t * 3) * 0.08; a1 = -1.0 - Math.sin(t * 3 + 1) * 0.08; }
+      beine[0].rotation.x = sw * 0.55; beine[1].rotation.x = -sw * 0.55;
+      const atem = Math.sin(zeit * 2.2) * 0.012;
+      k.position.y = Math.abs(sw) * 0.035; k.scale.set(1 - atem * 0.5, 1 + atem, 1 - atem * 0.5);
+      k.rotation.z = sw * 0.04;
+      let a0 = -0.12 + sw * 0.55, a1 = -0.12 - sw * 0.55;
+      if (spielt) { a0 = -0.95 + Math.sin(t * 3) * 0.08; a1 = -0.95 - Math.sin(t * 3 + 1) * 0.08; }
       if (g.jubel > 0) { g.jubel -= dt; a0 = a1 = -2.8 + Math.sin(t * 18) * 0.25; k.position.y = Math.abs(Math.sin(t * 9)) * 0.08; }
-      kopf.rotation.y = g.frust > 0 ? Math.sin(t * 14) * 0.45 : 0;
-      kopf.rotation.x = g.frust > 0 ? 0.25 : 0;
+      kopf.rotation.y = g.frust > 0 ? Math.sin(t * 14) * 0.45 : Math.sin(zeit * 0.6) * 0.12;
+      kopf.rotation.x = g.frust > 0 ? 0.25 : Math.sin(zeit * 0.9) * 0.03;
+      kopf.rotation.z = tempo > 0.1 ? 0 : Math.sin(zeit * 0.5) * 0.04;
       if (g.frust > 0) g.frust -= dt;
       arme[0].rotation.x += (a0 - arme[0].rotation.x) * Math.min(1, dt * 12);
       arme[1].rotation.x += (a1 - arme[1].rotation.x) * Math.min(1, dt * 12);
+      // Blinzeln
+      blinzel -= dt;
+      const zu = blinzel < 0 ? Math.max(0, 1 - Math.abs(blinzel + 0.07) / 0.07) : 0;
+      if (blinzel < -0.14) blinzel = 2 + Math.random() * 4;
+      for (const l of lider) { l.scale.y = Math.max(0.001, zu * 1.05); l.position.y = 0.05 * (1 - zu); }
     };
     return g;
   }
@@ -156,10 +252,10 @@
   /* ---------- Don Flosse: Hai im Nadelstreifen ---------- */
   function donFlosse() {
     const g = new T.Group();
-    const haut = 0x6f8696, bauch = 0xe9eef2, anzug = 0x15161b;
+    const haut = 0x6f8696, bauch = 0xbfc8cf, anzug = 0x15161b;
     const k = new T.Group(); g.add(k);
     for (const s of [-1, 1]) { k.add(zyl(0.09, 0.08, 0.32, anzug, s * 0.12, 0.16, 0, 8)); k.add(box(0.15, 0.08, 0.26, 0x2a1a10, s * 0.12, 0.03, 0.05)); }
-    k.add(zyl(0.26, 0.24, 0.52, anzug, 0, 0.58, 0, 16));
+    const torso = new T.Mesh(rumpfGeo(), stoff(anzug, 0.42, 0.05)); torso.scale.set(1.32, 1.32, 1.25); torso.position.y = -0.076; k.add(torso);
     // Nadelstreifen
     for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; const st = box(0.008, 0.5, 0.008, 0x4a4d57, Math.sin(a) * 0.255, 0.58, Math.cos(a) * 0.255); k.add(st); }
     k.add(box(0.12, 0.34, 0.04, 0xf5f5f5, 0, 0.64, 0.24));
@@ -177,17 +273,33 @@
     }
     // Kopf: lange Schnauze, großes Grinsen
     const kopf = new T.Group(); kopf.position.y = 1.08; k.add(kopf);
-    const schaedel = kugel(0.26, haut, 0, 0, 0, 16); schaedel.scale.set(1, 0.95, 1.35); kopf.add(schaedel);
-    const unten = kugel(0.22, bauch, 0, -0.08, 0.07, 14); unten.scale.set(1, 0.6, 1.3); kopf.add(unten);
-    const maul = box(0.3, 0.035, 0.12, 0x3b0d12, 0, -0.08, 0.27); kopf.add(maul);
-    for (let i = 0; i < 9; i++) { const z = kegel(0.016, 0.04, 0xffffff, -0.13 + i * 0.0325, -0.058, 0.32, 4); z.rotation.x = Math.PI; kopf.add(z); }
-    for (const s of [-1, 1]) {
-      kopf.add(kugel(0.04, 0x0d0d0d, s * 0.17, 0.07, 0.18, 8));
-      kopf.add(kugel(0.012, 0xffffff, s * 0.17 + 0.012, 0.085, 0.215, 6));
-      for (let i = 0; i < 3; i++) kopf.add(box(0.006, 0.08, 0.03, 0x4d6070, s * 0.235, -0.02, -0.02 - i * 0.05));   // Kiemen
+    const schaedel = kugel(0.25, haut, 0, 0.02, 0, 32); schaedel.scale.set(1, 0.9, 1.2); kopf.add(schaedel);
+    // spitze Schnauze nach vorn
+    const schnauze = kegel(0.2, 0.34, haut, 0, 0.03, 0.33, 28); schnauze.rotation.x = Math.PI / 2; schnauze.scale.set(1, 1, 0.62); kopf.add(schnauze);
+    kopf.add(kugel(0.045, haut, 0, 0.03, 0.49, 16));
+    // heller Unterkiefer
+    const unten = kugel(0.22, bauch, 0, -0.1, 0.1, 28); unten.scale.set(1, 0.48, 1.35); kopf.add(unten);
+    // breites Grinsen unter der Schnauze mit Zahnreihe und Goldzahn
+    const maul = kugel(0.16, 0x2a080c, 0, -0.085, 0.27, 28); maul.scale.set(1.15, 0.26, 0.5); kopf.add(maul);
+    for (let i = 0; i < 11; i++) {
+      const x = -0.15 + i * 0.03, zz = 0.335 - Math.pow(Math.abs(x) / 0.15, 2) * 0.06;
+      const zahn = kegel(0.014, 0.045, i === 7 ? 0xe8b923 : 0xfafafa, x, -0.063, zz, 6); zahn.rotation.x = Math.PI; kopf.add(zahn);
+      if (i % 2) { const u = kegel(0.012, 0.035, 0xfafafa, x, -0.11, zz - 0.01, 6); kopf.add(u); }
     }
-    // Rückenflosse durch den Hut
-    const rf = kegel(0.1, 0.32, haut, 0, 0.36, -0.12, 4); rf.scale.z = 0.35; rf.rotation.x = -0.35; kopf.add(rf);
+    const stocher = zyl(0.004, 0.004, 0.15, 0xd7b98a, 0.18, -0.09, 0.27, 6); stocher.rotation.z = 1.25; stocher.rotation.y = 0.5; kopf.add(stocher);
+    for (const s of [-1, 1]) {
+      // Augen seitlich, selbstgefälliger Halbblick, schwere Braue
+      const auge = new T.Group(); auge.position.set(s * 0.19, 0.08, 0.17); auge.rotation.y = s * 0.75;
+      const ap = kugel(0.05, 0xfdfdfd, 0, 0, 0, 20); ap.scale.z = 0.6; auge.add(ap);
+      const pu = kugel(0.028, 0x111111, 0, -0.008, 0.024, 14); pu.scale.z = 0.5; auge.add(pu);
+      auge.add(new T.Mesh(geo('SphereGeometry', 0.008, 8, 6), new T.MeshBasicMaterial({ color:0xffffff })).translateX(0.01).translateY(0.004).translateZ(0.036));
+      const lid = kugel(0.053, haut, 0, 0.02, 0.004, 20); lid.scale.set(1.02, 0.55, 0.65); auge.add(lid);
+      const braue = box(0.085, 0.02, 0.03, 0x2f3a44, 0, 0.055, 0.02); braue.rotation.z = s * 0.3; auge.add(braue);
+      kopf.add(auge);
+      for (let i = 0; i < 3; i++) kopf.add(box(0.006, 0.08, 0.03, 0x4d6070, s * 0.235, -0.04, -0.06 - i * 0.05));   // Kiemen
+    }
+    // Rückenflosse ragt durch den Hut
+    const rf = kegel(0.15, 0.42, haut, 0, 0.42, -0.08, 4); rf.scale.z = 0.32; rf.rotation.x = -0.32; kopf.add(rf);
     const hut = new T.Group(); hut.position.set(0, 0.2, 0);
     hut.add(zyl(0.34, 0.34, 0.025, 0x111111, 0, 0, 0, 18));
     hut.add(zyl(0.2, 0.22, 0.2, 0x111111, 0, 0.11, 0, 16));

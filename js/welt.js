@@ -11,7 +11,7 @@
     { id:'spelunke', boden:'holz', wand:0x4a3326, wand2:0x5e3b26, decke:0x1a120c, nebel:0x22160e, nebelNah:14, nebelFern:46, amb:0x6a5040, hemi:[0xffd9a0, 0x2a1a10, 0.55], licht:0xffb060, licht2:0xff7a3d, akzent:0xd8a040, neon:[0xff6a3d, 0xffc04d], filz:0x1f6b3a, holz:0x5b3517, automat:0x8a2a1a },
     { id:'neon', boden:'gitter', wand:0x15111f, wand2:0x221a33, decke:0x09070f, nebel:0x170c26, nebelNah:12, nebelFern:44, amb:0x403058, hemi:[0xb090ff, 0x100818, 0.5], licht:0xd070ff, licht2:0x3dfcff, akzent:0xff3df2, neon:[0xff3df2, 0x3dfcff, 0xffe23d], filz:0x23246b, holz:0x241a33, automat:0x2a1450 },
     { id:'koralle', boden:'welle', wand:0x0f3b4a, wand2:0x0b2e3b, decke:0x071d26, nebel:0x0a2a36, nebelNah:12, nebelFern:44, amb:0x3a6a78, hemi:[0x9ff3ff, 0x062028, 0.55], licht:0x7fe3ff, licht2:0xff9a7a, akzent:0x4dfff0, neon:[0x4dfff0, 0xff8a65, 0xb388ff], filz:0x0f6b6b, holz:0x2a4a50, automat:0x0d5060 },
-    { id:'penthouse', boden:'marmor', wand:0xcfc6b6, wand2:0xb8ab93, decke:0xc9bfae, nebel:0x1a1f2e, nebelNah:20, nebelFern:60, amb:0x5a5448, hemi:[0xfff2d8, 0x403828, 0.42], licht:0xfff0d0, licht2:0xffd27a, akzent:0xe8b923, neon:[0xe8b923, 0xffffff], filz:0x6b1f2b, holz:0x2b1a10, automat:0x1a1a1a }
+    { id:'penthouse', boden:'marmor', wand:0xcfc6b6, wand2:0xb8ab93, decke:0xc9bfae, nebel:0x1a1f2e, nebelNah:20, nebelFern:60, amb:0x433e35, hemi:[0xfff2d8, 0x302a1e, 0.3], licht:0xfff0d0, licht2:0xffd27a, akzent:0xe8b923, neon:[0xe8b923, 0xffffff], filz:0x6b1f2b, holz:0x2b1a10, automat:0x1a1a1a }
   ];
 
   function leinwand(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return [c, c.getContext('2d')]; }
@@ -40,7 +40,7 @@
       }
     } else {
       for (let i = 0; i < 8; i++) for (let k = 0; k < 8; k++) {
-        x.fillStyle = (i + k) % 2 ? '#ddd5c6' : '#b9ad97'; x.fillRect(i * 64, k * 64, 64, 64);
+        x.fillStyle = (i + k) % 2 ? '#cfc6b5' : '#8f8370'; x.fillRect(i * 64, k * 64, 64, 64);
         x.strokeStyle = 'rgba(120,100,80,.12)'; x.lineWidth = 1.5;
         for (let a = 0; a < 3; a++) { x.beginPath(); x.moveTo(i * 64 + Math.random() * 64, k * 64); x.bezierCurveTo(i * 64 + Math.random() * 64, k * 64 + 20, i * 64 + Math.random() * 64, k * 64 + 44, i * 64 + Math.random() * 64, k * 64 + 64); x.stroke(); }
       }
@@ -99,19 +99,27 @@
     const g = new T.Group();
     const h = 0.86;
     let platte, rand;
+    const filzM = new T.MeshStandardMaterial({ map:KHGlanz.filzTextur(filz), roughness:0.95 });
+    const leder = new T.MeshStandardMaterial({ color:0x1c120d, roughness:0.38, metalness:0.05 });
+    const goldM = new T.MeshStandardMaterial({ color:0xd4af37, roughness:0.25, metalness:1 });
     if (form === 'halb') {
-      platte = new T.Mesh(new T.CylinderGeometry(w / 2, w / 2, 0.06, 32, 1, false, Math.PI / 2, Math.PI), mat(filz));
+      platte = new T.Mesh(new T.CylinderGeometry(w / 2, w / 2, 0.06, 48, 1, false, Math.PI / 2, Math.PI), filzM);
       rand = new T.Mesh(new T.CylinderGeometry(w / 2 + 0.1, w / 2 + 0.1, 0.1, 32, 1, false, Math.PI / 2, Math.PI), mat(th.holz));
       platte.rotation.y = Math.PI; rand.rotation.y = Math.PI;
       platte.position.set(0, h, 0.4); rand.position.set(0, h - 0.03, 0.4);
+      const polster = new T.Mesh(new T.TorusGeometry(w / 2 + 0.04, 0.065, 14, 48, Math.PI), leder); polster.rotation.x = Math.PI / 2; polster.position.set(0, h + 0.03, 0.4); g.add(polster);
+      const ring = new T.Mesh(new T.TorusGeometry(w / 2 + 0.11, 0.015, 8, 48, Math.PI), goldM); ring.rotation.x = Math.PI / 2; ring.position.set(0, h - 0.035, 0.4); g.add(ring);
     } else {
-      platte = new T.Mesh(geo('CylinderGeometry', 1, 1, 0.06, 32), mat(filz));
+      platte = new T.Mesh(geo('CylinderGeometry', 1, 1, 0.06, 48), filzM);
       rand = new T.Mesh(geo('CylinderGeometry', 1, 1, 0.1, 32), mat(th.holz));
       platte.scale.set(w / 2, 1, d / 2); rand.scale.set(w / 2 + 0.1, 1, d / 2 + 0.1);
       platte.position.y = h; rand.position.y = h - 0.03;
+      const polster = new T.Mesh(geo('TorusGeometry', 1, 0.065, 14, 64), leder); polster.rotation.x = Math.PI / 2; polster.scale.set(w / 2 + 0.04, d / 2 + 0.04, 1); polster.position.y = h + 0.03; g.add(polster);
+      const ring = new T.Mesh(geo('TorusGeometry', 1, 0.015, 8, 64), goldM); ring.rotation.x = Math.PI / 2; ring.scale.set(w / 2 + 0.11, d / 2 + 0.11, 1); ring.position.y = h - 0.035; g.add(ring);
     }
     g.add(rand, platte);
-    g.add(zyl(0.25, 0.4, h - 0.05, th.holz, 0, (h - 0.05) / 2, form === 'halb' ? 0.1 : 0, 10));
+    g.add(zyl(0.22, 0.34, h - 0.05, th.holz, 0, (h - 0.05) / 2, form === 'halb' ? 0.1 : 0, 24));
+    const fuss = new T.Mesh(geo('CylinderGeometry', 0.5, 0.55, 0.06, 32), goldM); fuss.position.set(0, 0.03, form === 'halb' ? 0.1 : 0); g.add(fuss);
     g.hoehe = h;
     return g;
   }
@@ -710,13 +718,15 @@
       // Sockel- und Zierleisten
       for (const [w, d, x, z] of [[W, 0.1, 0, -D / 2 + 0.05], [W, 0.1, 0, D / 2 - 0.05], [0.1, D, -W / 2 + 0.05, 0], [0.1, D, W / 2 - 0.05, 0]]) {
         raum.add(box(w, 0.25, d, th.wand2, x, 0.125, z));
-        raum.add(teil(new T.BoxGeometry(w, 0.06, d), leucht(th.neon[0], e === 3 ? 0.7 : 1), x, 3.4, z));
+        if (e === 1) raum.add(teil(new T.BoxGeometry(w, 0.06, d), leucht(th.neon[0], 1), x, 3.4, z));
       }
       // Deckenlampen
       for (let x = -12; x <= 12; x += 8) for (let z = -6; z <= 8; z += 7) {
         raum.add(teil(geo('CylinderGeometry', 0.5, 0.6, 0.12, 16), leucht(th.licht, 0.9), x, H - 0.08, z));
         const sc = schein(th.licht, 3); sc.position.set(x, H - 0.4, z); sc.material.opacity = 0.35; raum.add(sc);
       }
+      raum.add(G.wandVerkleidung(th, W, D, H, e < 2, (w, t) => w.rot === 0 && t > -8.2 && t < -4.8));
+      raum.add(G.decke(th, W, D, H));
       dekoBauen(e, th, W, D, H);
       podiumBauen(th, D);
       pfandhausBauen(th);
@@ -745,7 +755,6 @@
     function dekoBauen(e, th, W, D, H) {
       if (e === 0) {
         // Spelunke: Backsteinwand-Flecken, Holzpfeiler, Fässer, Neon-Schilder
-        for (const x of [-16, -8, 8, 16]) for (const z of [-11.6, 11.6]) raum.add(box(0.5, H, 0.5, th.holz, x, H / 2, z));
         for (const [x, z] of [[-16, 10.5], [-15.2, 10.8], [16, 10.4], [15.3, 10.9], [-16.2, -2], [16.2, 3]]) { const f = zyl(0.35, 0.35, 0.9, 0x6d4c2c, x, 0.45, z, 12); raum.add(f); raum.add(zyl(0.36, 0.36, 0.05, 0x333333, x, 0.2, z, 12)); raum.add(zyl(0.36, 0.36, 0.05, 0x333333, x, 0.7, z, 12)); }
         const bar = schild('BAR', { breite:2.2, gr:110, farbe:'#ff8a65', glow:'#ff3d00' }); bar.position.set(14.5, 3.6, -11.75); raum.add(bar);
         const zock = schild('ZOCKEN • ZAHLEN • ZITTERN', { w:1024, h:128, breite:7, gr:80, farbe:'#ffd180', glow:'#ff6d00' }); zock.position.set(0, 4.1, 11.75); zock.rotation.y = Math.PI; raum.add(zock);
@@ -815,7 +824,7 @@
       const [c, x] = leinwand(1024, 384);
       tafelCtx = x; tafelTex = new T.CanvasTexture(c);
       tafel = new T.Mesh(new T.PlaneGeometry(6, 2.25), new T.MeshBasicMaterial({ map:tafelTex }));
-      tafel.position.set(0, 3.55, z0 + 0.03); raum.add(tafel);
+      tafel.position.set(0, 3.55, z0 + 0.075); raum.add(tafel);   // vor dem Rahmen (der reicht bis z0 + 0.05)
       raum.add(box(6.3, 2.5, 0.08, 0x111111, 0, 3.55, z0 + 0.01));
       // Don Flosse
       don = F.donFlosse(); don.position.set(0, 0.3, z0 + 1.2); raum.add(don);
