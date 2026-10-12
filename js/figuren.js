@@ -212,6 +212,16 @@
       kopf.add(h);
     }
     g.arme = arme; g.beine = beine; g.koerper = k; g.kopf = kopf; g.brille = brille; g.unterhose = unterhose; g.rumpf = rumpf;
+    // Item in der rechten Hand: Modell hängt am Arm, dreht sich langsam
+    g.itemHalten = (modell, skala) => {
+      if (g.trage) { arme[1].remove(g.anker); g.trage = null; g.anker = null; }
+      g.haelt = !!modell;
+      if (!modell) return;
+      const anker = new T.Group(); anker.position.set(0, -0.4, 0.27);
+      modell.scale.setScalar(skala || 0.46); modell.position.y = (skala || 0.46) * 0.5;
+      const dreh = new T.Group(); dreh.add(modell); anker.add(dreh);
+      arme[1].add(anker); g.anker = anker; g.trage = dreh;
+    };
     g.skala = o.skala || 1.5;
     g.scale.setScalar(g.skala);
     g.pfand = p => {
@@ -233,6 +243,8 @@
       k.rotation.z = sw * 0.04;
       let a0 = -0.12 + sw * 0.55, a1 = -0.12 - sw * 0.55;
       if (spielt) { a0 = -0.95 + Math.sin(t * 3) * 0.08; a1 = -0.95 - Math.sin(t * 3 + 1) * 0.08; }
+      if (g.haelt) { a1 = -1.25 + Math.sin(zeit * 1.6) * 0.04; if (!spielt) a0 = -0.12 + sw * 0.55 * 0.5; }   // Item vor dem Körper präsentieren
+      if (g.trage) g.trage.rotation.y += dt * 0.9;
       if (g.jubel > 0) { g.jubel -= dt; a0 = a1 = -2.8 + Math.sin(t * 18) * 0.25; k.position.y = Math.abs(Math.sin(t * 9)) * 0.08; }
       kopf.rotation.y = g.frust > 0 ? Math.sin(t * 14) * 0.45 : Math.sin(zeit * 0.6) * 0.12;
       kopf.rotation.x = g.frust > 0 ? 0.25 : Math.sin(zeit * 0.9) * 0.03;

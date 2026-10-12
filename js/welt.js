@@ -922,7 +922,11 @@
     }
     function figurenAbgleichen(spieler) {
       const da = new Set();
-      for (const sp of spieler) { if (sp.weg) continue; da.add(sp.id); const f = figurHolen(sp); f.g.pfand(sp.pfand); f.tisch = sp.tisch; f.spielt = !!sp.tisch; }
+      for (const sp of spieler) {
+        if (sp.weg) continue; da.add(sp.id); const f = figurHolen(sp); f.g.pfand(sp.pfand); f.tisch = sp.tisch; f.spielt = !!sp.tisch;
+        const hand = sp.hand != null ? sp.items[sp.hand] : null;
+        if (f.hand !== (hand || null)) { f.hand = hand || null; f.g.itemHalten(hand && KHItems.hat(hand) ? KHItems.modell(hand) : null); }
+      }
       for (const [id, f] of figuren) if (!da.has(id)) { figurGr.remove(f.g, f.name); figuren.delete(id); }
     }
     function figurZiel(id, x, z, r, sofort) {

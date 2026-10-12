@@ -236,3 +236,22 @@ test('Rakete: Auto-Ausstieg zahlt, Platzen kostet', () => {
   const w = t.runde.wetten.s0;
   assert.ok(w.raus === 1.5 || w.raus === 0, 'raus ' + w.raus);
 });
+
+test('Items: rausnehmen, tragen, wegstecken, benutzen', () => {
+  const sp = startTag(14);
+  const s = sp.spieler.get('s0');
+  s.items = ['drink', null, 'sanduhr'];
+  sp.aktion('s0', { a:'halten', slot:0 });
+  assert.strictEqual(sp.zustand().spieler[0].hand, 0);
+  sp.aktion('s0', { a:'halten', slot:0 });              // erneut = wegstecken
+  assert.strictEqual(sp.zustand().spieler[0].hand, null);
+  sp.aktion('s0', { a:'halten', slot:1 });              // leerer Platz geht nicht
+  assert.strictEqual(s.hand, null);
+  sp.aktion('s0', { a:'halten', slot:2 });
+  sp.aktion('s0', { a:'halten', slot:0 });              // anderes Item wechselt die Hand
+  assert.strictEqual(s.hand, 0);
+  sp.aktion('s0', { a:'item', slot:0 });                // benutzen räumt die Hand
+  assert.strictEqual(s.hand, null);
+  assert.strictEqual(s.items[0], null);
+  assert.ok(s.eff.drink);
+});

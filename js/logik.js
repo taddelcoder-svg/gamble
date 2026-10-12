@@ -142,7 +142,7 @@
       const n = this.spieler.size;
       const sp = {
         id, name:String(name || 'Gast').slice(0, 16), tier:TIERE.includes(tier) ? tier : TIERE[n % TIERE.length],
-        x:SPAWN.x + (n - 2.5) * 0.9, z:SPAWN.z + 1, r:0, tisch:null, sitzungen:{}, items:Array(SLOTS).fill(null),
+        x:SPAWN.x + (n - 2.5) * 0.9, z:SPAWN.z + 1, r:0, tisch:null, sitzungen:{}, items:Array(SLOTS).fill(null), hand:null,
         pfand:{ schuhe:false, brille:false, uhr:false, hose:false }, eff:{}, bereit:false, feierabend:false, weg:false,
         stats:{ netto:0, plus:0, minus:0, runden:0, groesster:0, schlimmster:0 }
       };
@@ -328,7 +328,7 @@
       this.tischeWuerfeln();
       this.aufgabenWuerfeln();
       for (const sp of this.spieler.values()) {
-        sp.tisch = null; sp.sitzungen = {}; sp.feierabend = false; sp.bereit = false;
+        sp.tisch = null; sp.sitzungen = {}; sp.feierabend = false; sp.bereit = false; sp.hand = null;
         sp.x = SPAWN.x + (Math.random() - 0.5) * 3; sp.z = SPAWN.z + 1;
       }
       this.feed(`Tag ${this.tag}: ${ETAGEN[this.etage].name}. Don Flosse gibt euch ${zahl(this.jetons)} $ in Jetons und will heute Abend ${zahl(this.quote)} $.`, 'tag');
@@ -497,9 +497,14 @@
         case 'aufstehen': this.aufstehen(sp); return;
         case 'spiel': return this.spielen(sp, b);
         case 'item': return this.itemNutzen(sp, b.slot | 0);
+        case 'halten': {   // Item aus der Tasche nehmen und in der Hand tragen (alle sehen es); erneut = wegstecken
+          const i = b.slot == null ? null : b.slot | 0;
+          sp.hand = i != null && sp.items[i] && sp.hand !== i ? i : null;
+          this.geaendert(); return;
+        }
         case 'pfand': return this.verpfaenden(sp, b.ding);
         case 'feierabend': sp.feierabend = !!b.an; this.geaendert(); this.bereitPruefen(); return;
-        case 'wegwerfen': { const i = b.slot | 0; if (sp.items[i]) { sp.items[i] = null; this.geaendert(); } return; }
+        case 'wegwerfen': { const i = b.slot | 0; if (sp.items[i]) { sp.items[i] = null; if (sp.hand === i) sp.hand = null; this.geaendert(); } return; }
       }
       return 'Unbekannter Befehl';
     }
@@ -567,7 +572,7 @@
         if (e.s) sp.eff[k] = { bis:Math.max(alt && alt.bis || 0, this.uhr) + e.s };
         else sp.eff[k] = { n:(alt && alt.n || 0) + e.n };
       }
-      sp.items[slot] = null;
+      sp.items[slot] = null; if (sp.hand === slot) sp.hand = null;
       this.ereignis({ e:'item', id:sp.id, item:k, x:sp.x, z:sp.z });
       if (k !== 'ratte' && k !== 'keks') this.feed(`${sp.name} benutzt ${I.icon} ${I.n}.`);
       this.geaendert();
@@ -597,7 +602,7 @@
           const t = sp.tisch && this.tischVon(sp.tisch);
           const s = t && sp.sitzungen[t.id];
           return {
-            id:sp.id, name:sp.name, tier:sp.tier, tisch:sp.tisch, items:sp.items, pfand:sp.pfand, eff:effSicht(sp), bereit:sp.bereit, feierabend:sp.feierabend,
+            id:sp.id, name:sp.name, tier:sp.tier, tisch:sp.tisch, items:sp.items, hand:sp.hand != null ? sp.hand : null, pfand:sp.pfand, eff:effSicht(sp), bereit:sp.bereit, feierabend:sp.feierabend,
             stats:sp.stats, weg:sp.weg, sitz:s ? G[t.art].sicht(s, brille) : null, sperre:s && s.bis ? Math.max(0, Math.round((s.bis - uhr) * 100) / 100) : 0,
             limit:t ? this.limit(sp, t, this.effekt(sp, 'goldchip')) : 0
           };

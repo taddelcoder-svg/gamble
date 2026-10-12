@@ -268,12 +268,15 @@
         b._k = k || ''; b.innerHTML = `<kbd>${i + 1}</kbd>`;
         if (k) b.append(KHItems.element(k, 46, L.ITEMS[k].icon));
       }
-      b.classList.toggle('leer', !k);
+      b.classList.toggle('leer', !k); b.classList.toggle('inHand', !!me && me.hand === i);
       b.title = k ? `${L.ITEMS[k].n}: ${L.ITEMS[k].t}` : 'Leer – Items gibt es im Hinterzimmer';
     });
     const eff = $('hEffekte'); eff.innerHTML = '';
     if (me) for (const k in me.eff) { const e = me.eff[k], I = L.ITEMS[k]; if (I) eff.append(h('span', { class:'eff', title:I.n }, KHItems.hat(k) ? KHItems.element(k, 24, I.icon) : I.icon, ' ' + (e.s != null ? e.s + ' s' : '×' + e.n))); }
     if (z.heiss) { const t = z.tische.find(x => x.id === z.heiss.tisch); if (t) eff.append(h('span', { class:'eff', text:`🔥 ${S.G[t.art].name} ${z.heiss.s} s` })); }
+    const trage = me && me.hand != null ? me.items[me.hand] : null;
+    $('hBenutzen').hidden = !trage || z.phase !== 'tag';
+    if (trage) $('hBenutzen').innerHTML = (istTouch ? '' : '<kbd>G</kbd>') + `${L.ITEMS[trage].n} benutzen`;
     const fa = $('hFeierabend');
     if (me) { fa.classList.toggle('an', me.feierabend); const n = z.spieler.filter(s => !s.weg && s.feierabend).length, g = z.spieler.filter(s => !s.weg).length; fa.textContent = `🏁 Feierabend${g > 1 ? ` ${n}/${g}` : ''}`; }
     $('verschwommen').hidden = !(me && me.pfand.brille);
@@ -531,8 +534,11 @@
   $('smHilfe').onclick = () => { $('hilfe').hidden = false; };
   $('smVerlassen').onclick = () => { spielMenue(false); if (modus === 'online') senden({ t:'verlassen' }); zumMenue(); };
   $('hFeierabend').onclick = () => { const me = meinSp(); if (me) aktion({ a:'feierabend', an:!me.feierabend }); };
-  document.querySelectorAll('.slot').forEach(b => b.addEventListener('click', () => itemNutzen(+b.dataset.slot)));
-  function itemNutzen(i) { const me = meinSp(); if (!me || !me.items[i] || !z || z.phase !== 'tag') return; aktion({ a:'item', slot:i }); }
+  // Item: erst rausnehmen (Taste 1–3 oder Klick auf den Platz), dann mit G oder dem Knopf benutzen
+  document.querySelectorAll('.slot').forEach(b => b.addEventListener('click', () => itemHalten(+b.dataset.slot)));
+  function itemHalten(i) { const me = meinSp(); if (!me || !me.items[i] || !z || z.phase !== 'tag') return; aktion({ a:'halten', slot:i }); Ton.spielen('klick'); }
+  function itemNutzen() { const me = meinSp(); if (!me || me.hand == null || !z || z.phase !== 'tag') return; aktion({ a:'item', slot:me.hand }); }
+  $('hBenutzen').addEventListener('click', itemNutzen);
   // Herausforderungen am Handy einklappbar
   if (matchMedia('(max-width: 760px), (pointer: coarse) and (max-height: 500px)').matches) $('aufgaben').classList.add('eingeklappt');
   $('aufgaben').querySelector('h3').addEventListener('click', () => $('aufgaben').classList.toggle('eingeklappt'));
@@ -552,7 +558,8 @@
     const k = e.key.toLowerCase();
     if (e.key === 'Escape') { if (panelTisch) panelSchliessen(false); else if (pfandOffen) pfandSchliessen(); else spielMenue(!menueOffen); return; }
     if (e.key === 'Enter' && z.phase === 'tag') { chatAuf(); e.preventDefault(); return; }
-    if (['1', '2', '3'].includes(k)) { itemNutzen(+k - 1); return; }
+    if (['1', '2', '3'].includes(k)) { itemHalten(+k - 1); return; }
+    if (k === 'g') { itemNutzen(); return; }
     if (/^f[1-6]$/.test(k)) { aktion({ a:'emote', e:EMOTES[+k[1] - 1][0] }); e.preventDefault(); return; }
     if (k === 'e' || k === ' ') { if (!panelTisch) interagieren(); e.preventDefault(); return; }
     tasten.add(k);
