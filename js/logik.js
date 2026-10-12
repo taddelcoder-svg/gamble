@@ -105,7 +105,7 @@
   }
 
   const ARTEN = Object.keys(G);
-  const TIERE = ['loewe', 'pinguin', 'fuchs', 'waschbaer', 'baer', 'hase'];
+  const TIERE = ['loewe', 'pinguin', 'fuchs', 'waschbaer', 'baer', 'hase', 'affe'];
 
   class Spiel {
     constructor(o = {}) {

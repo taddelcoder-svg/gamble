@@ -15,7 +15,7 @@
     name:speicher.lesen('name', ''), tier:speicher.lesen('tier', 'loewe'), laenge:speicher.lesen('laenge', 'normal'),
     dauer:+speicher.lesen('dauer', 300), grafik:speicher.lesen('grafik', istTouch ? 'mittel' : 'hoch')
   };
-  const TIER_ICON = { loewe:'🦁', pinguin:'🐧', fuchs:'🦊', waschbaer:'🦝', baer:'🐻', hase:'🐰' };
+  const TIER_ICON = { loewe:'🦁', pinguin:'🐧', fuchs:'🦊', waschbaer:'🦝', baer:'🐻', hase:'🐰', affe:'🐵' };
   const EMOTES = [['allin', 'ALL IN! 🔥'], ['nein', 'NEIN! 😱'], ['stopp', 'Hör auf! ✋'], ['komm', 'Komm her! 👋'], ['jaaa', 'Jaaa! 🤑'], ['hilfe', 'Hilfe! 🆘']];
   const EMOTE_TEXT = Object.fromEntries(EMOTES);
 

@@ -44,13 +44,14 @@
     waschbaer:{ fell:0x8d8f93, bauch:0xd8d8d8, ohren:'spitz', maul:'kurz', extra:'maske', anzug:0x4b2d73, fliege:0x4dd0e1 },
     baer:{ fell:0x7b5233, bauch:0xc49a6c, ohren:'rund', maul:'kurz', anzug:0x1f3f73, fliege:0xff7043 },
     hase:{ fell:0xf2efe9, bauch:0xffffff, ohren:'lang', maul:'kurz', anzug:0xd9d2c5, fliege:0xec407a },
+    affe:{ fell:0x6e4a2c, bauch:0xe9c9a0, ohren:'affe', maul:'kurz', extra:'affe', anzug:0x1f5f6b, fliege:0xffd54f },
     // Croupiers und Statisten
     katze:{ fell:0x9a9a9a, bauch:0xeeeeee, ohren:'spitz', maul:'kurz', anzug:0x222222, fliege:0xb71c1c },
     hund:{ fell:0xc9955c, bauch:0xf2dcc0, ohren:'schlapp', maul:'kurz', anzug:0x222222, fliege:0xb71c1c },
     maus:{ fell:0x8c8580, bauch:0xd6ccc8, ohren:'gross', maul:'spitz', anzug:0x5d4037, fliege:0x8d6e63 },
     otter:{ fell:0x6d4c33, bauch:0xc8a986, ohren:'rund', maul:'kurz', anzug:0x222222, fliege:0xb71c1c }
   };
-  const NAMEN = { loewe:'Löwe', pinguin:'Pinguin', fuchs:'Fuchs', waschbaer:'Waschbär', baer:'Bär', hase:'Hase' };
+  const NAMEN = { loewe:'Löwe', pinguin:'Pinguin', fuchs:'Fuchs', waschbaer:'Waschbär', baer:'Bär', hase:'Hase', affe:'Affe' };
 
   // Eigenes Material mit Rauheit/Metall (gecacht)
   function stoff(farbe, rau, metall = 0, extra) {
@@ -64,7 +65,7 @@
   const RUMPF_PROFIL = [[0.001, 0.30], [0.165, 0.30], [0.19, 0.36], [0.205, 0.45], [0.205, 0.55], [0.19, 0.62], [0.15, 0.665], [0.08, 0.69], [0.001, 0.695]];
   function rumpfGeo() { return geos.get('rumpf') || (geos.set('rumpf', Object.assign(new T.LatheGeometry(RUMPF_PROFIL.map(([r, y]) => new T.Vector2(r, y)), 28), { _geteilt:true })), geos.get('rumpf')); }
 
-  const AUGEN = { loewe:0x8d5a12, pinguin:0x3b2a1a, fuchs:0x6b8e23, waschbaer:0x3b2a1a, baer:0x4e2f14, hase:0xd14d72, katze:0x3d9a3d, hund:0x5b3a1a, maus:0x222222, otter:0x3b2a1a };
+  const AUGEN = { affe:0x3b2210, loewe:0x8d5a12, pinguin:0x3b2a1a, fuchs:0x6b8e23, waschbaer:0x3b2a1a, baer:0x4e2f14, hase:0xd14d72, katze:0x3d9a3d, hund:0x5b3a1a, maus:0x222222, otter:0x3b2a1a };
 
   function tier(art, o = {}) {
     const A = ARTEN[art] || ARTEN.loewe;
@@ -182,6 +183,11 @@
         case 'gross': { const a = K(0.12, mFell, 0, 0, 0, 18); a.scale.z = 0.3; gr.add(a); const b = K(0.085, innen, 0, 0, 0.018, 16); b.scale.z = 0.25; gr.add(b); gr.position.set(s * 0.19, 0.17, -0.02); break; }
         case 'spitz': { const a = M(geo('ConeGeometry', 0.075, 0.18, 14), mFell, 0, 0.06, 0); a.scale.z = 0.5; gr.add(a); const b = M(geo('ConeGeometry', 0.045, 0.12, 12), innen, 0, 0.045, 0.02); b.scale.z = 0.35; gr.add(b); gr.position.set(s * 0.14, 0.15, -0.02); gr.rotation.z = -s * 0.32; break; }
         case 'lang': { const a = K(0.06, mFell, 0, 0.17, 0, 16); a.scale.set(0.8, 3, 0.55); gr.add(a); const b = K(0.04, innen, 0, 0.17, 0.02, 14); b.scale.set(0.7, 2.7, 0.35); gr.add(b); gr.position.set(s * 0.085, 0.13, -0.02); gr.rotation.z = -s * 0.16; break; }
+        case 'affe': {   // große runde Seitenohren mit hellrosa Innenseite, tief am Kopf
+          const a = K(0.085, mFell, 0, 0, 0, 20); a.scale.z = 0.55; gr.add(a);
+          const b = K(0.056, innen, 0, 0, 0.022, 16); b.scale.z = 0.4; gr.add(b);
+          gr.position.set(s * 0.225, 0.02, -0.01); break;
+        }
         case 'schlapp': { const a = K(0.08, stoff(dunkel(fell, 0.3), 0.85), 0, -0.1, 0, 16); a.scale.set(0.6, 1.6, 0.8); gr.add(a); gr.position.set(s * 0.2, 0.08, -0.02); gr.rotation.z = s * 0.25; break; }
         default: return null;
       }
@@ -189,6 +195,20 @@
     };
     for (const s of [-1, 1]) { const e = ohr(s); if (e) kopf.add(e); }
     // Schwänze
+    if (A.extra === 'affe') {
+      // helle Gesichtsmaske: Stirn-Herz, Wangen und Schnauze
+      const maske = stoff(A.bauch, 0.8);
+      const stirn = K(0.11, maske, 0, 0.055, 0.17, 24); stirn.scale.set(1.45, 0.82, 0.38); kopf.add(stirn);
+      for (const s of [-1, 1]) { const w = K(0.1, maske, s * 0.075, -0.035, 0.165, 24); w.scale.set(1, 1.05, 0.4); kopf.add(w); }
+      const kinn = K(0.075, maske, 0, -0.1, 0.155, 20); kinn.scale.set(1.4, 0.8, 0.7); kopf.add(kinn);
+      for (const s of [-1, 1]) { const nl = K(0.01, stoff(0x2a1712, 0.4), s * 0.014, -0.045, 0.26, 8); kopf.add(nl); }
+      // Haarbüschel
+      for (let i = 0; i < 5; i++) { const h = M(geo('ConeGeometry', 0.02, 0.07, 6), mFell, (i - 2) * 0.03, 0.225, 0.03 - Math.abs(i - 2) * 0.012); h.rotation.z = (i - 2) * -0.22; kopf.add(h); }
+      // langer, geschwungener Schwanz
+      const kurve = new T.CatmullRomCurve3([new T.Vector3(0, 0.34, -0.2), new T.Vector3(0.0, 0.2, -0.46), new T.Vector3(0.12, 0.2, -0.7), new T.Vector3(0.2, 0.42, -0.74), new T.Vector3(0.14, 0.62, -0.62), new T.Vector3(0.04, 0.6, -0.5)]);
+      g.add(M(new T.TubeGeometry(kurve, 32, 0.032, 10), mFell));
+      g.add(K(0.036, mFell, 0.04, 0.6, -0.5, 10));
+    }
     if (A.extra === 'schwanz') { const sw = K(0.1, mFell, 0, 0.36, -0.28, 18); sw.scale.set(0.85, 0.85, 2.1); sw.rotation.x = 0.4; g.add(sw); const sp = K(0.07, mBauch, 0, 0.45, -0.47, 14); sp.scale.set(0.9, 0.9, 1.3); g.add(sp); }
     if (art === 'waschbaer') for (let i = 0; i < 4; i++) g.add(K(0.07 - i * 0.004, i % 2 ? stoff(0x2d2d30, 0.85) : mFell, 0, 0.33 + i * 0.03, -0.25 - i * 0.085, 14));
     if (art === 'hase') g.add(K(0.06, mBauch, 0, 0.36, -0.2, 14));
