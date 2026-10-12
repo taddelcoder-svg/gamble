@@ -19,11 +19,11 @@
   --sicher-u:env(safe-area-inset-bottom,0px);--sicher-o:env(safe-area-inset-top,0px);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font:600 16px/1.35 "Barlow Semi Condensed",system-ui,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font:600 16px/1.35 "Barlow Semi Condensed",system-ui,sans-serif;touch-action:manipulation;overscroll-behavior:none;user-select:none;-webkit-user-select:none}
 button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
 input{font:inherit;color:inherit;user-select:text;-webkit-user-select:text}
 [hidden]{display:none!important}
-canvas#welt{position:fixed;inset:0;width:100%;height:100%;display:block}
+canvas#welt{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
 .knopf{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 18px;border-radius:12px;background:var(--flaeche2);border:1px solid var(--rand);font-weight:700;transition:transform .08s,filter .15s}
 .knopf:hover{filter:brightness(1.15)}.knopf:active{transform:scale(.97)}
 .knopf.gold,button.gold{background:linear-gradient(180deg,var(--gold2),var(--gold));color:#1d1503;border-color:#a8820f}
@@ -239,7 +239,7 @@ button.mittel{padding:10px;border-radius:10px;background:#2c2840;border:1px soli
 
 /* ---------- Pfandhaus, Hinterzimmer, Abrechnung, Ende ---------- */
 .dialog{position:fixed;inset:0;z-index:30;display:grid;place-items:center;padding:16px;background:rgba(5,4,8,.6);backdrop-filter:blur(2px);overflow:auto}
-.dialogBox{width:100%;max-width:640px;background:var(--flaeche);border:1px solid var(--rand);border-radius:20px;padding:20px;box-shadow:var(--schatten);max-height:calc(100vh - 32px);overflow:auto;touch-action:pan-y}
+.dialogBox{width:100%;max-width:640px;background:var(--flaeche);border:1px solid var(--rand);border-radius:20px;padding:20px;box-shadow:var(--schatten);max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);overflow:auto;touch-action:pan-y}
 .dialogBox h2{margin:0 0 4px;font-size:30px}
 .sprecher{display:flex;gap:14px;align-items:flex-start;margin:10px 0}
 .sprecher .gesicht{font-size:52px;line-height:1}
@@ -275,14 +275,19 @@ button.mittel{padding:10px;border-radius:10px;background:#2c2840;border:1px soli
 .toast.gut{border-color:var(--gruen);color:#c8ffdc}
 #lade{position:fixed;inset:0;display:grid;place-items:center;background:var(--bg);z-index:60;font-size:22px;color:var(--leise)}
 
+/* Touch-Geräte jeder Größe (auch iPad): Joystick statt Tastatur */
+@media (pointer:coarse){
+  #stick{display:block;bottom:calc(110px + var(--sicher-u))}
+  body.panelAuf #stick{display:none}
+}
 /* Panel offen (breiter Bildschirm): HUD in die freie linke Fläche rücken */
-@media (min-width:761px){
+@media (min-width:761px) and (min-height:501px),(min-width:761px) and (pointer:fine){
   body.panelAuf #oben{left:calc((100% - min(440px,100vw)) / 2)}
   body.panelAuf #aufgaben,body.panelAuf #seitenKnoepfe{display:none}
   body.panelAuf #unten{left:calc((100% - min(440px,100vw)) / 2)}
 }
-/* ---------- Kleine Bildschirme ---------- */
-@media (max-width:760px){
+/* ---------- Kleine Bildschirme (auch Handys quer) ---------- */
+@media (max-width:760px),(pointer:coarse) and (max-height:500px){
   #oben{top:calc(6px + var(--sicher-o))}
   .kasse{min-width:0;padding:6px 10px}.kasse .zeilen{flex-wrap:nowrap;gap:8px}.kasse .bank{font-size:21px;white-space:nowrap}.kasse .rate{font-size:12px}
   .uhr{font-size:22px;min-width:66px;padding:6px 8px}
@@ -298,15 +303,15 @@ button.mittel{padding:10px;border-radius:10px;background:#2c2840;border:1px soli
   #stick{display:block}
   .slot{width:52px;height:52px;font-size:26px}
   #unten{bottom:calc(10px + var(--sicher-u))}
-  #panel{top:auto;height:68vh;width:100vw;border-left:0;border-top:1px solid var(--rand);border-radius:20px 20px 0 0;animation:panelHoch .25s ease-out}
+  #panel{top:auto;height:68vh;height:68dvh;width:100vw;border-left:0;border-top:1px solid var(--rand);border-radius:20px 20px 0 0;animation:panelHoch .25s ease-out}
   @keyframes panelHoch{from{transform:translateY(40px);opacity:0}}
   #hinweis{bottom:calc(80px + var(--sicher-u));font-size:16px}
   body.panelAuf #stick,body.panelAuf #unten,body.panelAuf #seitenKnoepfe,body.panelAuf #feed,body.panelAuf #aufgaben{display:none}
   .tiere{grid-template-columns:repeat(3,1fr)}
   .karte{width:52px;height:74px}.karte b{font-size:22px}.karte i{font-size:20px}
 }
-@media (max-width:760px) and (orientation:landscape){
-  #panel{height:100vh;width:min(420px,60vw);right:0;top:0;border-radius:0}
+@media (max-width:760px) and (orientation:landscape),(pointer:coarse) and (max-height:500px){
+  #panel{height:100vh;height:100dvh;width:min(420px,60vw);right:0;top:0;border-radius:0}
   #feed{display:none}
 }
 </style>
