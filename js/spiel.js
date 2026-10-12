@@ -264,12 +264,15 @@
     // Items
     document.querySelectorAll('.slot').forEach(b => {
       const i = +b.dataset.slot, k = me && me.items[i];
-      b.innerHTML = `<kbd>${i + 1}</kbd>` + (k ? L.ITEMS[k].icon : '');
+      if (b._k !== (k || '')) {   // nur neu bauen, wenn sich der Inhalt ändert (sonst stoppt die Drehung)
+        b._k = k || ''; b.innerHTML = `<kbd>${i + 1}</kbd>`;
+        if (k) b.append(KHItems.element(k, 46, L.ITEMS[k].icon));
+      }
       b.classList.toggle('leer', !k);
       b.title = k ? `${L.ITEMS[k].n}: ${L.ITEMS[k].t}` : 'Leer – Items gibt es im Hinterzimmer';
     });
     const eff = $('hEffekte'); eff.innerHTML = '';
-    if (me) for (const k in me.eff) { const e = me.eff[k], I = L.ITEMS[k]; if (I) eff.append(h('span', { class:'eff', title:I.n, text:I.icon + ' ' + (e.s != null ? e.s + ' s' : '×' + e.n) })); }
+    if (me) for (const k in me.eff) { const e = me.eff[k], I = L.ITEMS[k]; if (I) eff.append(h('span', { class:'eff', title:I.n }, KHItems.hat(k) ? KHItems.element(k, 24, I.icon) : I.icon, ' ' + (e.s != null ? e.s + ' s' : '×' + e.n))); }
     if (z.heiss) { const t = z.tische.find(x => x.id === z.heiss.tisch); if (t) eff.append(h('span', { class:'eff', text:`🔥 ${S.G[t.art].name} ${z.heiss.s} s` })); }
     const fa = $('hFeierabend');
     if (me) { fa.classList.toggle('an', me.feierabend); const n = z.spieler.filter(s => !s.weg && s.feierabend).length, g = z.spieler.filter(s => !s.weg).length; fa.textContent = `🏁 Feierabend${g > 1 ? ` ${n}/${g}` : ''}`; }
@@ -340,7 +343,7 @@
       case 'item': {
         Ton.spielen('item');
         const I = L.ITEMS[e.item];
-        if (I) schwebe(e.id, I.icon, 'schwebe', 1.8, 2.7);
+        if (I) schwebe(e.id, KHItems.hat(e.item) ? '<span class="itemBild" style="width:84px;height:84px;background-image:url(' + KHItems.sheet(e.item).url + ');background-size:' + KHItems.FRAMES * 100 + '% 100%;background-position:' + (3 / (KHItems.FRAMES - 1) * 100) + '% 0"></span>' : I.icon, 'schwebe', 1.8, 2.7);
         break;
       }
       case 'pfand': Ton.spielen('kasse'); break;
@@ -423,7 +426,7 @@
       const I = L.ITEMS[a.item];
       const kann = !a.weg && z.tickets >= a.preis && me.items.includes(null);
       ang.append(h('button', { class:'ware' + (a.weg ? ' weg' : ''), disabled:kann ? null : 'disabled', 'data-f':'w' + i, onclick:() => { aktion({ a:'kaufen', i }); Ton.spielen('kasse'); } },
-        h('span', { class:'wIcon', text:I.icon }), h('b', { text:I.n }), h('p', { text:I.t }), h('span', { class:'preis', text:a.weg ? 'verkauft' : `🎫 ${a.preis}` })));
+        h('span', { class:'wIcon' }, KHItems.element(a.item, 78, I.icon)), h('b', { text:I.n }), h('p', { text:I.t }), h('span', { class:'preis', text:a.weg ? 'verkauft' : `🎫 ${a.preis}` })));
     });
     box.append(ang);
     box.append(h('div', { class:'zeile' },
