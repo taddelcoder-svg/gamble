@@ -531,7 +531,7 @@
   document.querySelectorAll('.slot').forEach(b => b.addEventListener('click', () => itemNutzen(+b.dataset.slot)));
   function itemNutzen(i) { const me = meinSp(); if (!me || !me.items[i] || !z || z.phase !== 'tag') return; aktion({ a:'item', slot:i }); }
   // Herausforderungen am Handy einklappbar
-  if (matchMedia('(max-width: 760px)').matches) $('aufgaben').classList.add('eingeklappt');
+  if (matchMedia('(max-width: 760px), (pointer: coarse) and (max-height: 500px)').matches) $('aufgaben').classList.add('eingeklappt');
   $('aufgaben').querySelector('h3').addEventListener('click', () => $('aufgaben').classList.toggle('eingeklappt'));
   for (const [k, t] of EMOTES) $('emotes').append(h('button', { text:t, onclick:() => aktion({ a:'emote', e:k }) }));
 
@@ -573,12 +573,15 @@
     if (ziehen && e.pointerId === ziehen.id && ziehen.weg < 6 && !panelTisch) interagieren(true);
     ziehen = null;
   });
+  cv.addEventListener('pointercancel', () => { ziehen = null; });
   cv.addEventListener('wheel', e => { kamAbstand = Math.max(3.5, Math.min(10, kamAbstand + e.deltaY * 0.005)); }, { passive:true });
   let kamAbstand = 6;
   const st = $('stick');
   st.addEventListener('pointerdown', e => { stick.id = e.pointerId; st.setPointerCapture(e.pointerId); stickBewegen(e); });
   st.addEventListener('pointermove', e => { if (e.pointerId === stick.id) stickBewegen(e); });
-  st.addEventListener('pointerup', () => { stick = { x:0, y:0, id:null }; st.firstElementChild.style.transform = ''; });
+  const stickLos = () => { stick = { x:0, y:0, id:null }; st.firstElementChild.style.transform = ''; };
+  st.addEventListener('pointerup', stickLos);
+  st.addEventListener('pointercancel', stickLos);   // iOS bricht Gesten ab (Benachrichtigung, Wischen vom Rand) – sonst läuft man ewig weiter
   function stickBewegen(e) {
     const r = st.getBoundingClientRect();
     let x = (e.clientX - r.left - r.width / 2) / (r.width / 2), y = (e.clientY - r.top - r.height / 2) / (r.height / 2);
@@ -704,7 +707,7 @@
       const t = z.tische.find(x => x.id === panelTisch);
       if (t) {
         const dx = pos.x - t.x, dz = pos.z - t.z, d = Math.hypot(dx, dz) || 1;
-        const breit = innerWidth > 760;
+        const breit = innerWidth > 760 || innerWidth > innerHeight;   // Panel rechts statt unten
         const seit = breit ? 0.9 : 0;    // Tisch etwas nach links rücken, rechts ist das Panel
         // Breit: Tisch links neben dem Panel. Schmal (Panel unten): steil von oben, Tisch im oberen Drittel
         kamera = breit

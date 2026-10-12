@@ -209,5 +209,5 @@ canvas.rad{filter:drop-shadow(0 10px 18px rgba(0,0,0,.55))}
 #lade{background:radial-gradient(ellipse at 50% 40%,#231a10,#060508 70%);font-family:var(--serif);font-style:italic;color:#d9c79a;letter-spacing:.04em}
 
 /* Panel offen auf breitem Schirm: Ereigniszeilen unter die Kontoanzeige */
-@media (min-width:761px){body.panelAuf #feed{top:calc(124px + var(--sicher-o))}}
-@media (max-width:760px){.tiere{grid-template-columns:repeat(6,1fr);gap:6px}.tier{font-size:22px;border-width:1.5px}.tier small{font-size:9px;bottom:-16px}.chips .chip{width:54px;height:54px;font-size:13px}.titel{font-size:46px}}
+@media (min-width:761px) and (min-height:501px),(min-width:761px) and (pointer:fine){body.panelAuf #feed{top:calc(124px + var(--sicher-o))}}
+@media (max-width:760px),(pointer:coarse) and (max-height:500px){.tiere{grid-template-columns:repeat(6,1fr);gap:6px}.tier{font-size:22px;border-width:1.5px}.tier small{font-size:9px;bottom:-16px}.chips .chip{width:54px;height:54px;font-size:13px}.titel{font-size:46px}}
