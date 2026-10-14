@@ -489,6 +489,7 @@
   };
   function endeZeigen() {
     const e = z.ende, E = ENDEN[e.art] || ENDEN.aquarium, box = $('endeBox');
+    if (!e.slGez) { e.slGez = 1; window.SLZaehle && SLZaehle('sl_kredithai', s => { s.spiele = (s.spiele || 0) + 1; (s.enden = s.enden || {})[e.art] = 1; s.bank = Math.max(s.bank || 0, Math.round(e.bank || 0)); }); }
     box.innerHTML = '';
     box.append(h('div', { style:'font-size:72px', text:E.icon }), h('h2', { text:E.titel }), h('p', { text:E.text }),
       h('p', { class:'klein', text:`Geschafft bis Tag ${e.tag} von ${z.tage} · ${e.mahnungen} Mahnungen · Konto am Ende ${zahl(e.bank)} $` }));
