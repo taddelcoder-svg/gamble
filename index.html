@@ -526,6 +526,13 @@ button.mittel{padding:10px;border-radius:10px;background:#2c2840;border:1px soli
 </script>
 
 <!-- Rangliste der Spielesammlung: meldet Spielzeit, Punkte und Progress -->
+<script>
+window.SLZaehle=function(k,f){try{var s=JSON.parse(localStorage.getItem(k))||{};f(s);localStorage.setItem(k,JSON.stringify(s))}catch(e){}};
+window.SLRangAdapter=function(){
+  var s={};try{s=JSON.parse(localStorage.getItem('sl_kredithai'))||{}}catch(e){}
+  return{punkte:s.bank||0,progress:Math.min(100,Object.keys(s.enden||{}).length/4*100)}
+};
+</script>
 <script src="https://rangliste-aoee.onrender.com/melder.js" data-spiel="Kredithai" defer></script>
 </body>
 </html>
